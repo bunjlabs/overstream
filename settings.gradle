@@ -1,0 +1,12 @@
+rootProject.name = 'overstream'
+
+include 'overstream-common'
+include 'overstream-websocket'
+include 'overstream-websocket-server'
+include 'overstream-websocket-client'
+include 'overstream-message-server'
+include 'overstream-osc'
+include 'overstream-x32mixer'
+
+include 'overstream-app'
+

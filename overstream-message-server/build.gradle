@@ -1,0 +1,5 @@
+dependencies {
+    compile project(":overstream-common")
+    compile project(":overstream-websocket-server")
+    implementation 'com.google.code.gson:gson:2.8.5'
+}

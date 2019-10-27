@@ -1,0 +1,16 @@
+processResources {
+    filesMatching('**/version.yaml') {
+        expand(project: project)
+    }
+}
+
+dependencies {
+    compile project(":overstream-common")
+    compile project(":overstream-websocket-client")
+    compile project(":overstream-websocket-server")
+    compile project(":overstream-osc")
+    compile project(":overstream-message-server")
+    compile project(":overstream-x32mixer")
+    implementation 'com.bunjlabs.fuga:fuga-context:0.8-SNAPSHOT'
+    implementation 'ch.qos.logback:logback-classic:1.2.3'
+}

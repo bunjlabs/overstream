@@ -1,0 +1,5 @@
+apply plugin: 'base'
+
+subprojects {
+    apply from: rootProject.file('common.gradle')
+}

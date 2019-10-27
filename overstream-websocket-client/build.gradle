@@ -1,0 +1,4 @@
+dependencies {
+    compile project(":overstream-common")
+    compile project(":overstream-websocket")
+}
