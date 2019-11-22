@@ -1,4 +1,4 @@
-package com.overstreamapp.websocket.server.netty;
+package com.overstreamapp.websocket.netty;
 
 import com.bunjlabs.fuga.util.ObjectUtils;
 import com.overstreamapp.websocket.WebSocket;
@@ -7,17 +7,18 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.websocketx.*;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Objects;
 
-public class NettyWebSocketImpl implements WebSocket {
+public class NettyWebSocket implements WebSocket {
 
     private final ChannelHandlerContext context;
-    private final WebSocketServerHandshaker handshaker;
+    private final URI uri;
 
-    public NettyWebSocketImpl(ChannelHandlerContext context, WebSocketServerHandshaker handshaker) {
+    public NettyWebSocket(ChannelHandlerContext context, URI uri) {
         this.context = context;
-        this.handshaker = handshaker;
+        this.uri = uri;
     }
 
     @Override
@@ -66,6 +67,11 @@ public class NettyWebSocketImpl implements WebSocket {
     }
 
     @Override
+    public URI getUri() {
+        return uri;
+    }
+
+    @Override
     public boolean isOpen() {
         return context.channel().isOpen();
     }
@@ -86,7 +92,7 @@ public class NettyWebSocketImpl implements WebSocket {
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
-        NettyWebSocketImpl that = (NettyWebSocketImpl) o;
+        NettyWebSocket that = (NettyWebSocket) o;
         return context.equals(that.context);
     }
 

@@ -6,7 +6,6 @@
 package com.overstreamapp.x32mixer;
 
 /**
- *
  * @author Artem Shurygin <artem.shurygin@bunjlabs.com>
  */
 public class X32Meter {
@@ -15,12 +14,14 @@ public class X32Meter {
 
     private final int index;
     private final float sensitivity;
+    private final boolean latch;
     private final X32MeterListener listener;
 
     private float value;
 
-    public X32Meter(int channel, int type, float sensitivity, X32MeterListener listener) {
+    public X32Meter(int channel, int type, float sensitivity, boolean latch, X32MeterListener listener) {
         this.sensitivity = sensitivity;
+        this.latch = latch;
         this.index = 32 * type + (channel - 1);
         this.listener = listener;
 
@@ -33,10 +34,18 @@ public class X32Meter {
         }
 
         float newValue = newValues[index];
+        float diff = Math.abs(newValue - value);
 
-        if (Math.abs(newValue - value) > sensitivity) {
+        if (latch) {
+            if(value > sensitivity && newValue < sensitivity) {
+                value = newValue;
+                fireValueChanged();
+            } else if(value < sensitivity && newValue > sensitivity) {
+                value = newValue;
+                fireValueChanged();
+            }
+        } else if (Math.abs(newValue - value) > sensitivity) {
             value = newValue;
-
             fireValueChanged();
         }
     }

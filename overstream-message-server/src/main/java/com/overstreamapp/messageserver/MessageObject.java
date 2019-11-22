@@ -1,6 +1,6 @@
 package com.overstreamapp.messageserver;
 
-import com.overstreamapp.messagebus.Message;
+import com.overstreamapp.messageserver.messages.Message;
 
 class MessageObject {
 

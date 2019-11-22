@@ -1,13 +1,9 @@
-package com.overstreamapp.messagebus;
+package com.overstreamapp.messageserver.messages;
 
-import java.util.EventObject;
-
-public abstract class Message extends EventObject {
-
+public abstract class Message {
     private final long timestamp;
 
-    public Message(Object source) {
-        super(source);
+    public Message() {
         this.timestamp = System.currentTimeMillis();
     }
 

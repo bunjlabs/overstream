@@ -11,6 +11,8 @@ dependencies {
     compile project(":overstream-osc")
     compile project(":overstream-message-server")
     compile project(":overstream-x32mixer")
+    compile project(":overstream-mpd")
+    compile project(":overstream-twitch")
     implementation 'com.bunjlabs.fuga:fuga-context:0.8-SNAPSHOT'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 }

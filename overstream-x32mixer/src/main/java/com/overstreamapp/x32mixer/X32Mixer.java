@@ -23,6 +23,8 @@ class X32Mixer {
     private final OscClient oscClient;
     private final SocketAddress remoteAddress;
 
+    private boolean started = false;
+
     X32Mixer(SocketAddress remoteAddress, Logger logger, EventLoopGroupManager eventLoopGroupManager, OscClient oscClient) {
         this.remoteAddress = remoteAddress;
         this.logger = logger;
@@ -46,14 +48,20 @@ class X32Mixer {
     }
 
     void start() {
-        this.oscClient.start(remoteAddress, new X32OscHandler(this));
+        if (!started) {
+            this.started = true;
+            this.oscClient.start(remoteAddress, new X32OscHandler(this));
+        }
     }
 
+    @SuppressWarnings("unchecked")
     <T extends OscType> void subscribe(String address, X32SubscriptionListener<T> listener) {
+        if (!started) return;
+
         send("/subscribe", address, 5);
 
-        X32Subscription subscription = new X32Subscription(address, listener);
-        subscriptions.put(address, subscription);
+        X32Subscription<T> subscription = new X32Subscription<>(address, listener);
+        subscriptions.put(address, (X32Subscription<OscType>) subscription);
 
         logger.debug("Subscribed to {}", address);
     }
@@ -66,12 +74,14 @@ class X32Mixer {
         }
     }
 
-    void meters(int channel, int type, float sensitivity, X32MeterListener listener) {
+    void meters(int channel, int type, float sensitivity, boolean latch, X32MeterListener listener) {
+        if (!started) return;
+
         if (meters.isEmpty()) {
             send("/meters", "/meters/1", 10);
         }
 
-        X32Meter meter = new X32Meter(channel, type, sensitivity, listener);
+        X32Meter meter = new X32Meter(channel, type, sensitivity, latch, listener);
         meters.add(meter);
         logger.debug("Subscribed to meter({}, {}) ", channel, type);
     }
@@ -80,14 +90,6 @@ class X32Mixer {
         meters.forEach(s -> {
             s.onData(nativeFloats);
         });
-    }
-
-    void forceSubscribesUpdate() {
-        subscriptions.values().forEach(X32Subscription::fireValueChanged);
-    }
-
-    void forceMetersUpdate() {
-        meters.forEach(X32Meter::fireValueChanged);
     }
 
     private void send(String address, Object... arguments) {

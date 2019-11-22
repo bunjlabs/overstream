@@ -15,6 +15,6 @@ public interface X32MixerSettings {
 
 
     @SettingName("meter-sensitivity")
-    @SettingDefault("0.001")
-    float meterSensitivity();
+    @SettingDefault("1")
+    int meterSensitivity();
 }

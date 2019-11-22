@@ -1,13 +1,12 @@
 package com.overstreamapp.messageserver.messages;
 
-import com.overstreamapp.messagebus.Message;
 
 public class RawWebSocketMessage extends Message {
 
     private final String rawMessage;
 
-    public RawWebSocketMessage(Object source, String rawMessage) {
-        super(source);
+    public RawWebSocketMessage(String rawMessage) {
+        super();
         this.rawMessage = rawMessage;
     }
 

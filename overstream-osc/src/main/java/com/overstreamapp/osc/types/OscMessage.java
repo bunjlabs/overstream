@@ -31,12 +31,12 @@ public class OscMessage implements OscPacket {
 
     public OscMessage() {
         this.address = "";
-        this.arguments = Collections.EMPTY_LIST;
+        this.arguments = Collections.emptyList();
     }
 
     public OscMessage(String address) {
         this.address = address;
-        this.arguments = Collections.EMPTY_LIST;
+        this.arguments = Collections.emptyList();
     }
 
     public OscMessage(String address, List<OscType> arguments) {

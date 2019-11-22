@@ -1,6 +1,7 @@
 package com.overstreamapp.websocket;
 
 import java.net.InetSocketAddress;
+import java.net.URI;
 import java.nio.ByteBuffer;
 
 public interface WebSocket {
@@ -20,6 +21,8 @@ public interface WebSocket {
     InetSocketAddress getRemoteSocketAddress();
 
     InetSocketAddress getLocalSocketAddress();
+
+    URI getUri();
 
     boolean isOpen();
 

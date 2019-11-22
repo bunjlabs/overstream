@@ -6,11 +6,11 @@ import com.overstreamapp.osc.types.OscType;
 public class X32Subscription<T extends OscType> {
 
     private final String address;
-    private final X32SubscriptionListener listener;
+    private final X32SubscriptionListener<T> listener;
 
     private T value;
 
-    public X32Subscription(String address, X32SubscriptionListener listener) {
+    public X32Subscription(String address, X32SubscriptionListener<T> listener) {
         this.address = address;
         this.listener = listener;
         this.value = null;

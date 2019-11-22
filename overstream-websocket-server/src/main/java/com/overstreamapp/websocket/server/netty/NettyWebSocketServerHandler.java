@@ -1,6 +1,7 @@
 package com.overstreamapp.websocket.server.netty;
 
 import com.overstreamapp.websocket.WebSocketHandler;
+import com.overstreamapp.websocket.netty.NettyWebSocket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelFuture;
@@ -12,6 +13,10 @@ import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.AsciiString;
 import io.netty.util.CharsetUtil;
 
+import java.net.InetSocketAddress;
+import java.net.SocketAddress;
+import java.net.URI;
+
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
@@ -21,7 +26,7 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
     private final WebSocketHandler handler;
     private WebSocketServerHandshaker handshaker;
 
-    private NettyWebSocketImpl webSocket;
+    private NettyWebSocket webSocket;
 
     public NettyWebSocketServerHandler(WebSocketHandler handler) {
         this.handler = handler;
@@ -98,7 +103,9 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
             WebSocketServerHandshakerFactory.sendUnsupportedVersionResponse(ctx.channel());
         } else {
             handshaker.handshake(ctx.channel(), req);
-            handler.onOpen(webSocket = new NettyWebSocketImpl(ctx, handshaker));
+            InetSocketAddress socketAddress = (InetSocketAddress) ctx.channel().localAddress();
+            handler.onOpen(webSocket = new NettyWebSocket(ctx,
+                    URI.create(String.format("ws://%s:%d/", socketAddress.getHostName(), socketAddress.getPort()))));
         }
     }
 
