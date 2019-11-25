@@ -2,10 +2,9 @@ package com.overstreamapp.messageserver;
 
 import com.bunjlabs.fuga.inject.Inject;
 import com.google.gson.Gson;
-import com.overstreamapp.messageserver.messages.StateUpdateMessage;
-import com.overstreamapp.statemanager.StateInfo;
-import com.overstreamapp.statemanager.StateManager;
-import com.overstreamapp.statemanager.StateObject;
+import com.overstreamapp.AppInfo;
+import com.overstreamapp.messageserver.messages.*;
+import com.overstreamapp.statemanager.*;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.server.WebSocketServer;
@@ -17,73 +16,118 @@ import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 
-public class MessageServer implements WebSocketHandler {
+public class MessageServer {
 
     private final Set<WebSocket> clients = new HashSet<>();
     private final Logger log;
     private final MessageServerSettings settings;
+    private AppInfo appInfo;
     private final WebSocketServer webSocketServer;
     private final StateManager stateManager;
     private final Gson gson;
+    private final WebSocketHandler webSocketHandler;
+    private final State connectionEvent;
 
     @Inject
-    public MessageServer(Logger log, WebSocketServer webSocketServer, StateManager stateManager, MessageServerSettings settings) {
+    public MessageServer(Logger log, AppInfo appInfo, WebSocketServer webSocketServer, StateManager stateManager, MessageServerSettings settings) {
         this.log = log;
+        this.appInfo = appInfo;
         this.webSocketServer = webSocketServer;
         this.stateManager = stateManager;
         this.settings = settings;
 
         this.gson = new Gson();
+        this.webSocketHandler = new Handler();
+
+        this.connectionEvent = stateManager.createState(new StateOptions("OverStreamNewConnection", StateType.EVENT, NewConnectionEvent::new));
     }
 
     public void start() {
         SocketAddress bindAddress = new InetSocketAddress(settings.bindHost(), settings.bindPort());
-        webSocketServer.start(bindAddress, this);
+        webSocketServer.start(bindAddress, webSocketHandler);
 
-        stateManager.subscribeAll(this::onMessageBus);
+        stateManager.subscribeAll(this::onStateMessage);
 
         log.info("Started on {}", bindAddress);
     }
 
-    private void onMessageBus(StateInfo info, StateObject stateObject) {
+    private void onStateMessage(StateOptions info, StateObject stateObject) {
         clients.forEach(c -> c.send(compileStateObject(info, stateObject)));
     }
 
-    private String compileStateObject(StateInfo info, StateObject stateObject) {
-        return gson.toJson(new MessageObject(new StateUpdateMessage(info, stateObject)));
+    private String compileStateObject(StateOptions info, StateObject stateObject) {
+        return gson.toJson(new StateMessage(info, stateObject));
     }
 
-    @Override
-    public void onOpen(WebSocket socket) {
-        clients.add(socket);
-        log.info("Client connected {}", socket.getRemoteSocketAddress());
-
-        stateManager.burst((info, stateObject) -> socket.send(compileStateObject(info, stateObject)));
+    private String compileStateBurstObject(StateOptions info, StateObject stateObject) {
+        return gson.toJson(new StateBurstMessage(info, stateObject));
     }
 
-    @Override
-    public void onClose(WebSocket socket, int code, String reason, boolean remote) {
-        clients.remove(socket);
-        log.info("Client disconnected {} {} {} remote:{}", socket.getRemoteSocketAddress(), code, reason, remote);
+    private String compileStateInfo(StateOptions info) {
+        return gson.toJson(new StateOptionsMessage(info));
     }
 
-    @Override
-    public void onMessage(WebSocket socket, String message) {
-        log.info("Message received {} {}", socket.getRemoteSocketAddress(), message);
+    private String compileReady() {
+        return gson.toJson(new ReadyMessage(appInfo.name() + "-" + appInfo.version()));
     }
 
-    @Override
-    public void onMessage(WebSocket socket, ByteBuffer bytes) {
-
+    private String compilePong() {
+        return gson.toJson(new PongMessage());
     }
 
-    @Override
-    public void onError(WebSocket socket, Throwable ex) {
-        log.error("Error", ex);
+    private class Handler implements WebSocketHandler {
+
+        @Override
+        public void onOpen(WebSocket socket) {
+            clients.add(socket);
+            stateManager.getAllStateOption().forEach(info -> socket.send(compileStateInfo(info)));
+            stateManager.pushAll((info, stateObject) -> socket.send(compileStateBurstObject(info, stateObject)));
+            socket.send(compileReady());
+
+            connectionEvent.push(new NewConnectionEvent(socket.getRemoteSocketAddress().getHostString()));
+
+            log.info("Client connected {}", socket.getRemoteSocketAddress());
+        }
+
+        @Override
+        public void onClose(WebSocket socket, int code, String reason, boolean remote) {
+            clients.remove(socket);
+            log.info("Client disconnected {} {} {} remote:{}", socket.getRemoteSocketAddress(), code, reason, remote);
+        }
+
+        @Override
+        public void onMessage(WebSocket socket, String message) {
+            log.debug("Message received {} {}", socket.getRemoteSocketAddress(), message);
+
+            if (message.equals("PING")) {
+                socket.send(compilePong());
+            }
+        }
+
+        @Override
+        public void onMessage(WebSocket socket, ByteBuffer bytes) {
+
+        }
+
+        @Override
+        public void onError(WebSocket socket, Throwable ex) {
+            log.error("Error", ex);
+        }
+
+        @Override
+        public void onStart() {
+            log.info("New client connection");
+        }
     }
 
-    @Override
-    public void onStart() {
-        log.info("New client connection");
+    private static class NewConnectionEvent extends EventObject {
+        private String host;
+
+        public NewConnectionEvent() {
+        }
+
+        public NewConnectionEvent(String host) {
+            this.host = host;
+        }
     }
 }

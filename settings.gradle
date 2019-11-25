@@ -9,6 +9,8 @@ include 'overstream-osc'
 include 'overstream-x32mixer'
 include 'overstream-mpd'
 include 'overstream-twitch'
+include 'overstream-streamlabs-socket'
+include 'overstream-obs'
 
 include 'overstream-app'
 

@@ -1,5 +1,7 @@
 package com.overstreamapp.network;
 
+import com.bunjlabs.fuga.util.Assert;
+
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -11,6 +13,10 @@ class DefaultThreadFactory implements ThreadFactory {
         this.prefix = DefaultThreadFactory.class.getSimpleName() + "-";
     }
 
+    DefaultThreadFactory(String poolName) {
+        this.prefix = Assert.hasText(poolName) + "-";
+    }
+
     @Override
     public Thread newThread(Runnable runnable) {
         var thread = new Thread(runnable, prefix + nextId.incrementAndGet());
@@ -18,8 +24,8 @@ class DefaultThreadFactory implements ThreadFactory {
             if (thread.isDaemon()) {
                 thread.setDaemon(false);
             }
-            if (thread.getPriority() != Thread.MAX_PRIORITY) {
-                thread.setPriority(Thread.MAX_PRIORITY);
+            if (thread.getPriority() != Thread.NORM_PRIORITY) {
+                thread.setPriority(Thread.NORM_PRIORITY);
             }
         } catch (Throwable ignored) {
         }

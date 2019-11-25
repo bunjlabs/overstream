@@ -1,6 +1,7 @@
 package com.overstreamapp.x32mixer;
 
 import com.overstreamapp.network.EventLoopGroupManager;
+import com.overstreamapp.osc.OscChannel;
 import com.overstreamapp.osc.OscClient;
 import com.overstreamapp.osc.OscWriteException;
 import com.overstreamapp.osc.types.OscMessage;
@@ -15,20 +16,16 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 
 class X32Mixer {
+    private final Logger logger;
 
     private final Map<String, X32Subscription<OscType>> subscriptions;
     private final List<X32Meter> meters;
 
-    private final Logger logger;
-    private final OscClient oscClient;
-    private final SocketAddress remoteAddress;
+    private final OscChannel oscChannel;
 
-    private boolean started = false;
-
-    X32Mixer(SocketAddress remoteAddress, Logger logger, EventLoopGroupManager eventLoopGroupManager, OscClient oscClient) {
-        this.remoteAddress = remoteAddress;
+    X32Mixer(Logger logger, EventLoopGroupManager eventLoopGroupManager, OscChannel oscChannel) {
         this.logger = logger;
-        this.oscClient = oscClient;
+        this.oscChannel = oscChannel;
 
         this.subscriptions = new ConcurrentHashMap<>();
         this.meters = new CopyOnWriteArrayList<>();
@@ -38,26 +35,19 @@ class X32Mixer {
     }
 
     private void onTimer() {
+        if(this.subscriptions.isEmpty() || this.meters.isEmpty()) return;
+
         logger.trace("Renew subscriptions");
 
         try {
-            oscClient.send(new OscMessage("/renew"));
+            oscChannel.send(new OscMessage("/renew"));
         } catch (OscWriteException ex) {
             logger.error("Unable to renew mixer subscriptions", ex);
         }
     }
 
-    void start() {
-        if (!started) {
-            this.started = true;
-            this.oscClient.start(remoteAddress, new X32OscHandler(this));
-        }
-    }
-
     @SuppressWarnings("unchecked")
     <T extends OscType> void subscribe(String address, X32SubscriptionListener<T> listener) {
-        if (!started) return;
-
         send("/subscribe", address, 5);
 
         X32Subscription<T> subscription = new X32Subscription<>(address, listener);
@@ -75,8 +65,6 @@ class X32Mixer {
     }
 
     void meters(int channel, int type, float sensitivity, boolean latch, X32MeterListener listener) {
-        if (!started) return;
-
         if (meters.isEmpty()) {
             send("/meters", "/meters/1", 10);
         }
@@ -94,7 +82,7 @@ class X32Mixer {
 
     private void send(String address, Object... arguments) {
         try {
-            oscClient.send(new OscMessage(address, arguments));
+            oscChannel.send(new OscMessage(address, arguments));
         } catch (OscWriteException ex) {
             logger.error("Unable to write message", ex);
         }

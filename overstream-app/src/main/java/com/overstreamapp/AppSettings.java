@@ -9,27 +9,41 @@ import java.util.List;
 @Settings("application")
 public interface AppSettings {
 
-    @SettingName("scripts")
-    List<String> scripts();
+    @SettingName("modules-enabled")
+    ModulesEnabledSettings modulesEnabled();
 
-    @SettingName("message-server-enabled")
-    @SettingDefault("false")
-    boolean messageServer();
+    interface ModulesEnabledSettings {
+        @SettingName("groovy")
+        @SettingDefault("false")
+        boolean groovy();
 
+        @SettingName("message-server")
+        @SettingDefault("false")
+        boolean messageServer();
 
-    @SettingName("x32mixer-client-enabled")
-    @SettingDefault("false")
-    boolean x32MixerClient();
+        @SettingName("x32mixer-client")
+        @SettingDefault("false")
+        boolean x32MixerClient();
 
-    @SettingName("mpd-client-enabled")
-    @SettingDefault("false")
-    boolean mpdClient();
+        @SettingName("ympd-client")
+        @SettingDefault("false")
+        boolean mpdClient();
 
-    @SettingName("twitchmi-client-enabled")
-    @SettingDefault("false")
-    boolean twitchMiClient();
+        @SettingName("twitchmi-client")
+        @SettingDefault("false")
+        boolean twitchMiClient();
 
-    @SettingName("twitch-bot-enabled")
-    @SettingDefault("false")
-    boolean twitchBot();
+        @SettingName("twitch-bot")
+        @SettingDefault("false")
+        boolean twitchBot();
+
+        @SettingName("streamlabs-socket")
+        @SettingDefault("false")
+        boolean streamlabsSocket();
+
+        @SettingName("obs-client")
+        @SettingDefault("false")
+        boolean obsClient();
+
+    }
 }

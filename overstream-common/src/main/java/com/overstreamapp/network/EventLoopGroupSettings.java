@@ -4,7 +4,7 @@ import com.bunjlabs.fuga.settings.SettingDefault;
 import com.bunjlabs.fuga.settings.SettingName;
 import com.bunjlabs.fuga.settings.Settings;
 
-@Settings("threads")
+@Settings("networking")
 public interface EventLoopGroupSettings {
 
     @SettingDefault("nio")

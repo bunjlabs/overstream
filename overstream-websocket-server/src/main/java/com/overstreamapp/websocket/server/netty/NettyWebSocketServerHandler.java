@@ -4,10 +4,7 @@ import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.netty.NettyWebSocket;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.SimpleChannelInboundHandler;
+import io.netty.channel.*;
 import io.netty.handler.codec.http.*;
 import io.netty.handler.codec.http.websocketx.*;
 import io.netty.util.AsciiString;
@@ -20,7 +17,7 @@ import java.net.URI;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
-public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Object> {
+public class NettyWebSocketServerHandler extends ChannelInboundHandlerAdapter {
 
     private static final String WEBSOCKET_PATH = "/";
     private final WebSocketHandler handler;
@@ -28,11 +25,11 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
 
     private NettyWebSocket webSocket;
 
-    public NettyWebSocketServerHandler(WebSocketHandler handler) {
+    NettyWebSocketServerHandler(WebSocketHandler handler) {
         this.handler = handler;
     }
 
-    private static void sendHttpResponse(ChannelHandlerContext ctx, FullHttpRequest req, FullHttpResponse res) {
+    private static void sendHttpResponse(ChannelHandlerContext ctx, HttpRequest req, FullHttpResponse res) {
         if (res.status().code() != 200) {
             ByteBuf buf = Unpooled.copiedBuffer(res.status().toString(), CharsetUtil.UTF_8);
             res.content().writeBytes(buf);
@@ -46,12 +43,12 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
         }
     }
 
-    private static String getWebSocketLocation(FullHttpRequest req) {
+    private static String getWebSocketLocation(HttpRequest req) {
         String location = req.headers().get(HttpHeaderNames.HOST) + WEBSOCKET_PATH;
         return "ws://" + location;
     }
 
-    public static boolean isKeepAlive(HttpMessage message) {
+    private static boolean isKeepAlive(HttpMessage message) {
         String connection = message.headers().get(HttpHeaderNames.CONNECTION);
         if (connection != null && AsciiString.contentEqualsIgnoreCase(HttpHeaderValues.CLOSE, connection)) {
             return false;
@@ -65,9 +62,9 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
     }
 
     @Override
-    public void channelRead0(ChannelHandlerContext ctx, Object msg) {
-        if (msg instanceof FullHttpRequest) {
-            handleHttpRequest(ctx, (FullHttpRequest) msg);
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
+        if (msg instanceof HttpRequest) {
+            handleHttpRequest(ctx, (HttpRequest) msg);
         } else if (msg instanceof WebSocketFrame) {
             handleWebSocketFrame(ctx, (WebSocketFrame) msg);
         }
@@ -78,13 +75,15 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
         ctx.flush();
     }
 
-    private void handleHttpRequest(ChannelHandlerContext ctx, FullHttpRequest req) {
+    private void handleHttpRequest(ChannelHandlerContext ctx, HttpRequest req) {
         if (!req.decoderResult().isSuccess()) {
             sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST));
             return;
         }
 
-        if (req.method() != HttpMethod.GET) {
+        if (req.method() != HttpMethod.GET
+                || !"Upgrade".equalsIgnoreCase(req.headers().get(HttpHeaderNames.CONNECTION))
+                || !"WebSocket".equalsIgnoreCase(req.headers().get(HttpHeaderNames.UPGRADE))) {
             sendHttpResponse(ctx, req, new DefaultFullHttpResponse(HTTP_1_1, FORBIDDEN));
             return;
         }
@@ -116,6 +115,8 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
             handshaker.close(ctx.channel(), closeFrame.retain());
         } else if (frame instanceof PingWebSocketFrame) {
             ctx.channel().write(new PongWebSocketFrame(frame.content().retain()));
+        } else if (frame instanceof PongWebSocketFrame) {
+
         } else if (frame instanceof TextWebSocketFrame) {
             handler.onMessage(webSocket, ((TextWebSocketFrame) frame).text());
         } else {
@@ -135,5 +136,6 @@ public class NettyWebSocketServerHandler extends SimpleChannelInboundHandler<Obj
 
     @Override
     public void handlerRemoved(ChannelHandlerContext ctx) {
+
     }
 }

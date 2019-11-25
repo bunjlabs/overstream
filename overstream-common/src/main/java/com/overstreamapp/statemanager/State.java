@@ -8,4 +8,6 @@ public interface State {
     void push(StateObject stateObject);
 
     void push(Map<String, Object> stateObject);
+
+    StateOptions getStateOptions();
 }

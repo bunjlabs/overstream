@@ -2,5 +2,5 @@ package com.overstreamapp.statemanager;
 
 public interface StateUpdateListener {
 
-    void onUpdate(StateInfo info, StateObject stateObject);
+    void onUpdate(StateOptions info, StateObject stateObject);
 }

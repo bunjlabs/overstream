@@ -1,10 +1,7 @@
 package com.overstreamapp.twitchbot;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.statemanager.State;
-import com.overstreamapp.statemanager.StateInfo;
-import com.overstreamapp.statemanager.StateManager;
-import com.overstreamapp.statemanager.StateObject;
+import com.overstreamapp.statemanager.*;
 import com.overstreamapp.twitch.BadgeInfo;
 import com.overstreamapp.twitch.ChatMessage;
 import com.overstreamapp.twitch.MessageContent;
@@ -33,14 +30,14 @@ public class TwitchBot {
         this.logger = logger;
         this.settings = settings;
         this.twitchMi = twitchMi;
-        this.twitchChatState = stateManager.getState(new StateInfo("TwitchChat", 100));
+        this.twitchChatState = stateManager.createState(new StateOptions("TwitchChat", StateType.STATE, 1000, TwitchChatStateObject::new));
     }
 
-    public void enable() {
-        logger.info("Starting");
-
+    public void start() {
         settings.channels().forEach(twitchMi::joinChannel);
         twitchMi.subscribeChatMessage(this::onMessage);
+
+        logger.info("Started");
     }
 
     public void registerCommandsHandler(CommandsHandler handler) {
@@ -133,10 +130,10 @@ public class TwitchBot {
     public static class TwitchChatStateObject implements StateObject {
         private ChatMessage message;
 
-        public TwitchChatStateObject() {
+        TwitchChatStateObject() {
         }
 
-        public TwitchChatStateObject(ChatMessage message) {
+        TwitchChatStateObject(ChatMessage message) {
             this.message = message;
         }
 
@@ -183,7 +180,7 @@ public class TwitchBot {
                 ));
             }
             var contents = new ArrayList<MessageContent>();
-            for(Document content : ((List<Document>) document.get("badges"))) {
+            for(Document content : ((List<Document>) document.get("content"))) {
                 contents.add(new MessageContent(
                         MessageContent.Type.valueOf(content.getString("type")),
                         content.getString("value")

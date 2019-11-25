@@ -52,7 +52,7 @@ public class NettyWebSocketClient implements WebSocketClient {
                 .handler(new NettyWebSocketClientInitializer(uri, sslContext, handler));
 
         try {
-            Channel ch = b.connect(uri.getHost(), uri.getPort()).sync().channel();
+            b.connect(uri.getHost(), uri.getPort()).sync();
         } catch (InterruptedException e) {
             logger.error("Unable to start netty websocket server", e);
         }

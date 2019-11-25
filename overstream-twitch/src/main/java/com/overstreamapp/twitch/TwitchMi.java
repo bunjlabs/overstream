@@ -1,6 +1,7 @@
 package com.overstreamapp.twitch;
 
 import com.bunjlabs.fuga.inject.Inject;
+import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.statemanager.StateManager;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
@@ -17,6 +18,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -28,6 +30,7 @@ public class TwitchMi {
     private final static Pattern EMOTES_PATTERN = Pattern.compile("(?:(\\d+)-(\\d+)(?:,|$))");
     private final Logger logger;
     private final TwitchMiSettings settings;
+    private final EventLoopGroupManager loopGroupManager;
     private final WebSocketClient webSocketClient;
     private final WebSocketHandler webSocketHandler;
     private final CircularFifoQueue<String> ircCommandQueue;
@@ -38,9 +41,10 @@ public class TwitchMi {
     private WebSocket webSocket;
 
     @Inject
-    public TwitchMi(Logger logger, TwitchMiSettings settings, WebSocketClient webSocketClient) {
+    public TwitchMi(Logger logger, TwitchMiSettings settings, EventLoopGroupManager loopGroupManager, WebSocketClient webSocketClient) {
         this.logger = logger;
         this.settings = settings;
+        this.loopGroupManager = loopGroupManager;
         this.webSocketClient = webSocketClient;
         this.webSocketHandler = new Handler();
 
@@ -79,9 +83,9 @@ public class TwitchMi {
         if (state == ConnectionState.CONNECTED) {
             state = ConnectionState.DISCONNECTING;
             sendCommand("QUIT");
+        } else {
+            state = ConnectionState.DISCONNECTED;
         }
-
-        state = ConnectionState.DISCONNECTED;
 
         this.webSocket.close();
     }
@@ -89,7 +93,7 @@ public class TwitchMi {
     public void reconnect() {
         state = ConnectionState.RECONNECTING;
         disconnect();
-        connect();
+        loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, 2, TimeUnit.SECONDS);
     }
 
     public void joinChannel(String channelName) {
@@ -297,9 +301,9 @@ public class TwitchMi {
 
         @Override
         public void onOpen(WebSocket webSocket) {
-            logger.info("Connecting to Twitch IRC {} ...", webSocket.getUri());
-
             TwitchMi.this.webSocket = webSocket;
+
+            logger.debug("Connecting to Twitch IRC {} ...", webSocket.getUri());
 
             sendRawCommand("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
             sendRawCommand("CAP END");
@@ -310,6 +314,8 @@ public class TwitchMi {
             sendRawCommand("join #" + settings.userName());
 
             TwitchMi.this.state = ConnectionState.CONNECTED;
+
+            logger.info("Connected to Twitch IRC {}", webSocket.getUri());
         }
 
         @Override

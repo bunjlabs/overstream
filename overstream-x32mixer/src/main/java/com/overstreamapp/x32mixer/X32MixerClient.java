@@ -5,10 +5,7 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.osc.OscClient;
 import com.overstreamapp.osc.types.OscInt;
-import com.overstreamapp.statemanager.State;
-import com.overstreamapp.statemanager.StateInfo;
-import com.overstreamapp.statemanager.StateManager;
-import com.overstreamapp.statemanager.StateObject;
+import com.overstreamapp.statemanager.*;
 import org.bson.Document;
 import org.slf4j.Logger;
 
@@ -18,9 +15,10 @@ import java.net.SocketAddress;
 public class X32MixerClient {
 
     private final Logger logger;
+    private final SocketAddress remoteAddress;
+    private final OscClient oscClient;
     private final X32MixerSettings settings;
     private final X32Mixer mixer;
-    private final SocketAddress remoteAddress;
     private final State x32ChannelOnState;
     private final State x32ChannelGateState;
 
@@ -33,15 +31,16 @@ public class X32MixerClient {
             StateManager stateManager) {
         this.logger = logger;
         this.settings = settings;
+        this.oscClient = oscClient;
         this.remoteAddress = new InetSocketAddress(settings.host(), 10023);
-        this.mixer = new X32Mixer(remoteAddress, logger, eventLoopGroupManager, oscClient);
+        this.mixer = new X32Mixer(logger, eventLoopGroupManager, oscClient);
 
-        this.x32ChannelOnState = stateManager.getState(new StateInfo("X32ChannelOn", 0));
-        this.x32ChannelGateState = stateManager.getState(new StateInfo("X32ChannelGate", 0));
+        this.x32ChannelOnState = stateManager.createState(new StateOptions("X32ChannelOn", StateType.STATE, X32ChannelOnStateObject::new));
+        this.x32ChannelGateState = stateManager.createState(new StateOptions("X32ChannelGate", StateType.STATE, X32ChannelGateStateObject::new));
     }
 
     public void connect() {
-        mixer.start();
+        oscClient.start(remoteAddress, new X32OscHandler(mixer));
 
         logger.info("Started with {}", remoteAddress);
     }
@@ -56,6 +55,8 @@ public class X32MixerClient {
                                 new X32ChannelOnStateObject(channel, v.getValue() > 0)));
             }
         }
+
+        logger.info("Subscribed for channels on: {}", channels);
     }
 
     public void subscribeChannelGate(int... channels) {
@@ -71,6 +72,8 @@ public class X32MixerClient {
                                 new X32ChannelGateStateObject(channel, v > sensitivity)));
             }
         }
+
+        logger.info("Subscribed for channels gate: {}", channels);
     }
 
     public static class X32ChannelOnStateObject implements StateObject {

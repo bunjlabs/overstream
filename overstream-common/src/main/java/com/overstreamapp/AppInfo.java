@@ -2,7 +2,7 @@ package com.overstreamapp;
 
 import com.bunjlabs.fuga.settings.Settings;
 
-@Settings("app")
+@Settings("___app")
 public interface AppInfo {
 
     String name();

@@ -11,7 +11,7 @@ import java.util.concurrent.ThreadFactory;
 
 public class DefaultEventLoopGroupManager implements EventLoopGroupManager {
     private final Logger log;
-    private final ThreadFactory threadFactory;
+    private final ThreadFactory commonThreadFactory;
     private final EventLoopGroup bossEventLoopGroup;
     private final EventLoopGroup workerEventLoopGroup;
 
@@ -19,27 +19,32 @@ public class DefaultEventLoopGroupManager implements EventLoopGroupManager {
     @Singleton
     public DefaultEventLoopGroupManager(Logger log, EventLoopGroupSettings settings) {
         this.log = log;
-        this.threadFactory = new DefaultThreadFactory();
+        this.commonThreadFactory = new DefaultThreadFactory();
 
-        String type = settings.type();
-        int bossThreads = settings.bossThreads() < 0 ? 0 : settings.bossThreads();
-        int workerThreads = settings.bossThreads() < 0 ? 0 : settings.workerThreads();
+        var bossThreadFactory = new DefaultThreadFactory("BossEventLoop");
+        var workerThreadFactory = new DefaultThreadFactory("WorkerEventLoop");
 
+        var bossThreads = settings.bossThreads() < 0 ? 0 : settings.bossThreads();
+        var workerThreads = settings.workerThreads() < 0 ? 0 : settings.workerThreads();
+
+        var type = settings.type();
         if (type.equalsIgnoreCase("epoll")) {
-            this.bossEventLoopGroup = new EpollEventLoopGroup(bossThreads, threadFactory);
-            this.workerEventLoopGroup = new EpollEventLoopGroup(workerThreads, threadFactory);
+            this.bossEventLoopGroup = new EpollEventLoopGroup(bossThreads, bossThreadFactory);
+            this.workerEventLoopGroup = new EpollEventLoopGroup(workerThreads, workerThreadFactory);
         } else {
             type = "nio";
-            this.bossEventLoopGroup = new NioEventLoopGroup(bossThreads, threadFactory);
-            this.workerEventLoopGroup = new NioEventLoopGroup(workerThreads, threadFactory);
+            this.bossEventLoopGroup = new NioEventLoopGroup(bossThreads, bossThreadFactory);
+            this.workerEventLoopGroup = new NioEventLoopGroup(workerThreads, workerThreadFactory);
         }
+
+        System.setProperty("io.netty.tryReflectionSetAccessible", "false");
 
         log.info("Initialized with {} event loop group, {} boss threads and {} worker threads", type, bossThreads, workerThreads);
     }
 
     @Override
     public ThreadFactory getThreadFactory() {
-        return threadFactory;
+        return commonThreadFactory;
     }
 
     @Override

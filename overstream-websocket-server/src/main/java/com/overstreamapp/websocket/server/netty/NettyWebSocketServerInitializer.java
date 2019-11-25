@@ -10,10 +10,9 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketSe
 
 public class NettyWebSocketServerInitializer extends ChannelInitializer<SocketChannel> {
 
-    private static final String WEBSOCKET_PATH = "/websocket";
     private final WebSocketHandler handler;
 
-    public NettyWebSocketServerInitializer(WebSocketHandler handler) {
+    NettyWebSocketServerInitializer(WebSocketHandler handler) {
         this.handler = handler;
     }
 

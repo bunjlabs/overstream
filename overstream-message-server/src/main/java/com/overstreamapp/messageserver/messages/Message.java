@@ -1,15 +1,12 @@
 package com.overstreamapp.messageserver.messages;
 
 public abstract class Message {
+
     private final long timestamp;
+    private final String type;
 
-    public Message() {
+    public Message(String type) {
         this.timestamp = System.currentTimeMillis();
+        this.type = type;
     }
-
-    public long getTimestamp() {
-        return timestamp;
-    }
-
-    public abstract String typeName();
 }

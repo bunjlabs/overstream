@@ -2,23 +2,20 @@ package com.overstreamapp.statemanager;
 
 import com.bunjlabs.fuga.inject.Inject;
 import com.mongodb.MongoClient;
-import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoIterable;
+import com.mongodb.client.*;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.model.Sorts;
 import org.bson.Document;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
 public class DefaultStateManager implements StateManager {
     private final Logger logger;
-    private final Map<StateInfo, InternalState> stateMap;
+    private final Map<String, InternalState> stateMap;
     private final MongoDatabase database;
     private final List<StateUpdateListener> listenersList;
     private final Map<String, List<StateUpdateListener>> listenersMap;
@@ -37,29 +34,52 @@ public class DefaultStateManager implements StateManager {
     }
 
     @Override
-    public State getState(StateInfo info) {
-        InternalState state = stateMap.get(info);
+    public State createState(StateOptions options) {
+        InternalState state = stateMap.get(options.getName());
 
         if (state != null) {
             logger.debug("Return existing state");
             return state;
         }
 
-        logger.debug("Create new state");
+        logger.debug("Create new state {}", options);
         state = new InternalState();
-        state.stateInfo = info;
+        state.stateOptions = options;
 
-        if (info.getHistorySize() > 0) {
-            if (!collectionExists(info.getName())) {
-                CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions().capped(true).sizeInBytes(1024 * 1024 * 64).maxDocuments(info.getHistorySize());
-                database.createCollection(info.getName(), createCollectionOptions);
+        if (options.getHistoryStrategy() != HistoryStrategy.DISABLED) {
+            if (!collectionExists(options.getName())) {
+                CreateCollectionOptions createCollectionOptions = new CreateCollectionOptions();
+
+                if (options.getHistoryStrategy() == HistoryStrategy.CAPPED) {
+                    createCollectionOptions.capped(true)
+                            .sizeInBytes(1024 * 4 * options.getHistorySize())
+                            .maxDocuments(options.getHistorySize());
+                }
+
+                database.createCollection(options.getName(), createCollectionOptions);
             }
-            state.collection = database.getCollection(info.getName());
+            state.collection = database.getCollection(options.getName());
         }
 
-        stateMap.put(info, state);
+        stateMap.put(options.getName(), state);
 
         return state;
+    }
+
+    @Override
+    public State getState(String channel) {
+        return stateMap.get(channel);
+    }
+
+    @Override
+    public StateObject getLastStateValue(String channel) {
+        var state = stateMap.get(channel);
+
+        if (state == null) {
+            return null;
+        }
+
+        return state.lastState;
     }
 
     @Override
@@ -78,18 +98,25 @@ public class DefaultStateManager implements StateManager {
         listenersList.add(listener);
     }
 
-    public void burst(StateUpdateListener listener) {
+    public List<StateOptions> getAllStateOption() {
+        return stateMap.values().stream().map(s -> s.stateOptions).collect(Collectors.toList());
+    }
+
+    @Override
+    public void pushAll(StateUpdateListener listener) {
         logger.debug("Burst state");
 
-        stateMap.forEach((info, state) -> {
-            if(state.stateObject != null) {
-                listener.onUpdate(info, state.stateObject);
+        stateMap.forEach((channel, state) -> {
+            List<StateObject> stateObjects = state.load();
+
+            for (StateObject stateObject : stateObjects) {
+                listener.onUpdate(state.stateOptions, stateObject);
             }
         });
     }
 
-    private void firePushEvent(StateInfo info, StateObject stateObject) {
-        logger.debug("Fire push event {}", info);
+    private void firePushEvent(StateOptions info, StateObject stateObject) {
+        logger.trace("Fire push event {}", info);
 
         listenersList.forEach(l -> fireListenerEvent(l, info, stateObject));
 
@@ -99,7 +126,7 @@ public class DefaultStateManager implements StateManager {
         }
     }
 
-    private void fireListenerEvent(StateUpdateListener listener, StateInfo info, StateObject stateObject) {
+    private void fireListenerEvent(StateUpdateListener listener, StateOptions info, StateObject stateObject) {
         try {
             listener.onUpdate(info, stateObject);
         } catch (Throwable t) {
@@ -121,21 +148,47 @@ public class DefaultStateManager implements StateManager {
     }
 
     private class InternalState implements State {
-        private StateInfo stateInfo;
-        private StateObject stateObject;
+        private StateOptions stateOptions;
+        private StateObject lastState;
         private MongoCollection<Document> collection;
+
+        public StateOptions getStateOptions() {
+            return stateOptions;
+        }
 
         @Override
         public void push(StateObject stateObject) {
-            firePushEvent(stateInfo, stateObject);
+            firePushEvent(stateOptions, stateObject);
 
-            if (this.stateInfo.getHistorySize() > 0 && this.collection != null) {
-                Document document = new Document();
+            if (this.stateOptions.getHistorySize() > 0 && this.collection != null) {
+                var document = new Document();
                 stateObject.save(document);
                 this.collection.insertOne(document);
-                this.stateObject = stateObject;
+                this.lastState = stateObject;
                 logger.debug("State object saved {}", document);
             }
+        }
+
+        private List<StateObject> load() {
+            if (this.stateOptions.getHistoryStrategy() == HistoryStrategy.DISABLED
+                    || this.stateOptions.getHistorySize() <= 0
+                    || this.collection == null) {
+                return Collections.emptyList();
+            }
+
+            var documents = collection.find().sort(Sorts.descending("_id")).limit(stateOptions.getHistorySize());
+
+            if (documents == null) return Collections.emptyList();
+
+            var list = new ArrayList<StateObject>();
+            for (Document document : documents) {
+                StateObject stateObject = stateOptions.createStateObject();
+                stateObject.load(document);
+
+                list.add(stateObject);
+            }
+
+            return list;
         }
 
         @Override
