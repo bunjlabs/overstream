@@ -20,3 +20,4 @@ overstream*.jar
 ### OverStream ###
 
 settings.yaml
+*.groovy
