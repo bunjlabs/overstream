@@ -15,4 +15,8 @@ atlassian-ide-plugin.xml
 build/
 !gradle-wrapper.jar
 **/build/
+overstream*.jar
 
+### OverStream ###
+
+settings.yaml

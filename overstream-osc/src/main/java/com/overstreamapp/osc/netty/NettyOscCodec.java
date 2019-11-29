@@ -22,7 +22,7 @@ public class NettyOscCodec extends MessageToMessageCodec<DatagramPacket, OscPack
         msg.write(byteBuffer);
         byteBuffer.flip();
 
-        out.add(new DatagramPacket(Unpooled.wrappedBuffer(byteBuffer), (InetSocketAddress) ctx.channel().remoteAddress()));
+        out.add(new DatagramPacket(Unpooled.copiedBuffer(byteBuffer), (InetSocketAddress) ctx.channel().remoteAddress()));
     }
 
     @Override

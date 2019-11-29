@@ -1,6 +1,20 @@
+plugins {
+    id 'java'
+}
+
 processResources {
     filesMatching('**/version.yaml') {
         expand(project: rootProject)
+    }
+}
+
+jar {
+    manifest {
+        attributes "Main-Class": "com.overstreamapp.OverStreamBootstrap"
+    }
+
+    from {
+        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
