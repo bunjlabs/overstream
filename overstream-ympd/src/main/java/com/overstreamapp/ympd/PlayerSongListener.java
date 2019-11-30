@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.mpd;
+package com.overstreamapp.ympd;
 
-public enum YmpdStatus {
-    PLAYING, PAUSED, STOPPED
+
+public interface PlayerSongListener {
+
+    void sondChanged(YmpdSong song);
 }

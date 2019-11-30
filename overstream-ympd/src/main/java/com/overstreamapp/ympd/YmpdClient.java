@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.mpd;
+package com.overstreamapp.ympd;
 
 import com.bunjlabs.fuga.inject.Inject;
 import com.fasterxml.jackson.databind.JsonNode;

@@ -1,6 +1,10 @@
+plugins {
+    id 'java-library'
+}
+
 dependencies {
-    compile project(":overstream-common")
-    compile project(":overstream-websocket-client")
+    implementation project(":overstream-common")
+    implementation project(":overstream-websocket-client")
     implementation 'com.github.vladimir-bukhtoyarov:bucket4j-core:4.4.1'
     implementation 'org.apache.commons:commons-collections4:4.3'
 }

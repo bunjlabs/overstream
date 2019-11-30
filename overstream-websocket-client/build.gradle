@@ -1,4 +1,8 @@
+plugins {
+    id 'java-library'
+}
+
 dependencies {
-    compile project(":overstream-common")
-    compile project(":overstream-websocket")
+    implementation project(":overstream-common")
+    api project(":overstream-websocket")
 }

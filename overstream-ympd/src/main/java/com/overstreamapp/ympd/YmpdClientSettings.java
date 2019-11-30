@@ -14,10 +14,19 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.mpd;
+package com.overstreamapp.ympd;
 
+import com.bunjlabs.fuga.settings.SettingDefault;
+import com.bunjlabs.fuga.settings.SettingName;
+import com.bunjlabs.fuga.settings.Settings;
 
-public interface PlayerSongListener {
+@Settings("ympd")
+public interface YmpdClientSettings {
 
-    void sondChanged(YmpdSong song);
+    @SettingName("server-uri")
+    String serverUri();
+
+    @SettingName("history-size")
+    @SettingDefault("20")
+    int historySize();
 }

@@ -2,9 +2,11 @@ plugins {
     id 'java'
 }
 
-processResources {
-    filesMatching('**/version.yaml') {
-        expand(project: rootProject)
+gradle.projectsEvaluated {
+    processResources {
+        filesMatching('**/version.yaml') {
+            expand(project.properties)
+        }
     }
 }
 
@@ -14,21 +16,21 @@ jar {
     }
 
     from {
-        configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
 }
 
 dependencies {
-    compile project(":overstream-common")
-    compile project(":overstream-websocket-client")
-    compile project(":overstream-websocket-server")
-    compile project(":overstream-osc")
-    compile project(":overstream-message-server")
-    compile project(":overstream-x32mixer")
-    compile project(":overstream-mpd")
-    compile project(":overstream-twitch")
-    compile project(":overstream-streamlabs-socket")
-    compile project(":overstream-obs")
+    implementation project(":overstream-common")
+    implementation project(":overstream-websocket-client")
+    implementation project(":overstream-websocket-server")
+    implementation project(":overstream-osc")
+    implementation project(":overstream-message-server")
+    implementation project(":overstream-x32mixer")
+    implementation project(":overstream-ympd")
+    implementation project(":overstream-twitch")
+    implementation project(":overstream-streamlabs-socket")
+    implementation project(":overstream-obs")
     implementation 'com.bunjlabs.fuga:fuga-context:0.8-SNAPSHOT'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 }

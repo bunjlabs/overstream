@@ -1,5 +1,9 @@
+plugins {
+    id 'java-library'
+}
+
 dependencies {
-    compile project(":overstream-common")
-    compile project(":overstream-osc")
+    implementation project(":overstream-common")
+    implementation project(":overstream-osc")
     implementation 'com.google.code.gson:gson:2.8.5'
 }

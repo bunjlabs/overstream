@@ -14,19 +14,16 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.mpd;
+package com.overstreamapp.ympd;
 
-import com.bunjlabs.fuga.settings.SettingDefault;
-import com.bunjlabs.fuga.settings.SettingName;
-import com.bunjlabs.fuga.settings.Settings;
+import com.bunjlabs.fuga.inject.Configuration;
+import com.bunjlabs.fuga.inject.Singleton;
+import com.bunjlabs.fuga.inject.Unit;
 
-@Settings("ympd")
-public interface YmpdClientSettings {
-
-    @SettingName("server-uri")
-    String serverUri();
-
-    @SettingName("history-size")
-    @SettingDefault("20")
-    int historySize();
+public class YmpdClientUnit implements Unit {
+    @Override
+    public void setup(Configuration c) {
+        c.bind(YmpdClientSettings.class).auto();
+        c.bind(YmpdClient.class).auto().in(Singleton.class);
+    }
 }

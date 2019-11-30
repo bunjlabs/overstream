@@ -56,7 +56,7 @@ public class ObsClient {
         this.webSocketHandler = new Handler();
         this.gson = new GsonBuilder().registerTypeAdapter(ObsEvent.class, new ObsEventDeserializer()).create();
 
-        this.heartbeatState = stateManager.createState(new StateOptions("ObsHearbeat", StateType.STATE, ObsHeartbeatState::new));
+        this.heartbeatState = stateManager.createState(new StateOptions("ObsHeartbeat", StateType.STATE, ObsHeartbeatState::new));
         this.streamStatusState = stateManager.createState(new StateOptions("ObsStreamStatus", StateType.STATE, ObsStreamStatusState::new));
     }
 

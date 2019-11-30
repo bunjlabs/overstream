@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.mpd;
+package com.overstreamapp.ympd;
 
 public class YmpdSong {
 
