@@ -192,7 +192,7 @@ public class DefaultStateManager implements StateManager {
                 return Collections.emptyList();
             }
 
-            var documents = collection.find().sort(Sorts.descending("_id")).limit(stateOptions.getHistorySize());
+            var documents = collection.find().sort(Sorts.ascending("_id")).limit(stateOptions.getHistorySize());
 
             if (documents == null) return Collections.emptyList();
 
