@@ -62,17 +62,22 @@ public class ObsClient {
 
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
-            this.state = ConnectionState.CONNECTING;
+            logger.debug("Connecting to {}", settings.serverUri());
 
+            this.state = ConnectionState.CONNECTING;
             this.webSocketClient.connect(URI.create(settings.serverUri()), this.webSocketHandler);
         }
     }
 
     public void disconnect() {
         if (state != ConnectionState.DISCONNECTED) {
-            state = ConnectionState.DISCONNECTING;
-            this.webSocket.close();
-            this.webSocket = null;
+            if(this.webSocket !=null) {
+                state = ConnectionState.DISCONNECTING;
+                webSocket.close();
+                webSocket = null;
+            } else {
+                state = ConnectionState.DISCONNECTED;
+            }
         }
     }
 
@@ -106,7 +111,7 @@ public class ObsClient {
             ObsClient.this.state = ConnectionState.CONNECTED;
 
             send(new ObsSetHeartbeatRequest(true));
-            logger.info("Connected to OBS");
+            logger.info("Connected to {}", settings.serverUri());
         }
 
         @Override
@@ -130,7 +135,7 @@ public class ObsClient {
 
                 onObsEvent(event);
             } catch (Exception e) {
-                logger.error("Error parsing message", e);
+                logger.warn("Error parsing message", e);
             }
         }
 

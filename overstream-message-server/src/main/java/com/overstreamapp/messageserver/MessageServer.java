@@ -113,7 +113,7 @@ public class MessageServer {
 
         @Override
         public void onMessage(WebSocket socket, String message) {
-            log.debug("Message received {} {}", socket.getRemoteSocketAddress(), message);
+            log.trace("Message received {} {}", socket.getRemoteSocketAddress(), message);
 
             if (message.equals("PING")) {
                 socket.send(compilePong());

@@ -62,18 +62,22 @@ public class YmpdClient {
 
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
+            logger.debug("Connecting to {}", settings.serverUri());
 
             this.state = ConnectionState.CONNECTING;
-
             this.webSocketClient.connect(URI.create(settings.serverUri()), webSocketHandler);
         }
     }
 
     public void disconnect() {
         if (state != ConnectionState.DISCONNECTED) {
-            state = ConnectionState.DISCONNECTING;
-            this.webSocket.close();
-            this.webSocket = null;
+            if(this.webSocket !=null) {
+                state = ConnectionState.DISCONNECTING;
+                webSocket.close();
+                webSocket = null;
+            } else {
+                state = ConnectionState.DISCONNECTED;
+            }
         }
     }
 
@@ -84,7 +88,7 @@ public class YmpdClient {
     }
 
     private void onData(String type, JsonNode data) {
-        logger.debug("Received message: {}", data);
+        logger.trace("Received message: {}", data);
 
         if ("song_change".equals(type)) {
             YmpdSong song = new YmpdSong(
@@ -123,13 +127,18 @@ public class YmpdClient {
 
         @Override
         public void onClose(WebSocket socket, int code, String reason, boolean remote) {
-            state = ConnectionState.DISCONNECTED;
-            logger.info("Disconnected from {}", settings.serverUri());
+            if (state != ConnectionState.DISCONNECTING) {
+                logger.info("Connection to YMPD lost: {} {}. Retrying ...", code, reason);
+                reconnect();
+            } else {
+                state = ConnectionState.DISCONNECTED;
+                logger.info("Disconnected from YMPD: {} {}", code, reason);
+            }
         }
 
         @Override
         public void onMessage(WebSocket socket, String message) {
-            logger.trace("Received message: {}", message);
+            logger.trace("Received raw message: {}", message);
 
             try {
                 JsonNode root = mapper.readTree(message);
@@ -138,7 +147,7 @@ public class YmpdClient {
                     onData(root.get("type").asText(""), root.get("data"));
                 }
             } catch (Exception e) {
-                logger.error("Error parsing message", e);
+                logger.warn("Error parsing message", e);
             }
         }
 

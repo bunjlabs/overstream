@@ -41,7 +41,6 @@ public class OverStreamBootstrap {
         c.install(this::configureLogging);
         c.install(this::configureSettings);
         c.bind(OverStreamApp.class).auto();
-
     }
 
     private void configureLogging(Configuration c) {

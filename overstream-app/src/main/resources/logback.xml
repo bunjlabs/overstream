@@ -26,7 +26,7 @@
     <logger name="io.netty" level="WARN"/>
     <logger name="org.mongodb" level="WARN"/>
     <logger name="com.bunjlabs.fuga" level="WARN"/>
-    <logger name="com.overstreamapp" level="INFO"/>
+    <logger name="com.overstreamapp" level="DEBUG"/>
 
     <root  level="trace">
         <appender-ref ref="console"/>

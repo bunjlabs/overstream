@@ -90,20 +90,22 @@ public class TwitchMi {
 
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
+            logger.debug("Connecting to Twitch IRC {} ...", settings.serverUri());
+
             this.state = ConnectionState.CONNECTING;
             this.webSocketClient.connect(URI.create(settings.serverUri()), webSocketHandler);
         }
     }
 
     public void disconnect() {
-        if (state == ConnectionState.CONNECTED) {
-            state = ConnectionState.DISCONNECTING;
-            sendCommand("QUIT");
-        } else {
-            state = ConnectionState.DISCONNECTED;
+        if (state != ConnectionState.DISCONNECTED) {
+            if(this.webSocket != null) {
+                state = ConnectionState.DISCONNECTING;
+                this.webSocket.close();
+            } else {
+                state = ConnectionState.DISCONNECTED;
+            }
         }
-
-        this.webSocket.close();
     }
 
     public void reconnect() {
@@ -152,7 +154,7 @@ public class TwitchMi {
 
     private void sendRawCommand(String ircCommand) {
         if (this.webSocket.isOpen()) {
-            logger.debug("Send irc command: {}", ircCommand);
+            logger.trace("Send irc command: {}", ircCommand);
             this.webSocket.send(ircCommand);
         }
     }
@@ -319,8 +321,6 @@ public class TwitchMi {
         public void onOpen(WebSocket webSocket) {
             TwitchMi.this.webSocket = webSocket;
 
-            logger.debug("Connecting to Twitch IRC {} ...", webSocket.getUri());
-
             sendRawCommand("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
             sendRawCommand("CAP END");
 
@@ -369,7 +369,7 @@ public class TwitchMi {
                 logger.trace("IRC Raw message: {}", rawMessage);
 
                 if (rawMessage.contains(":req Invalid CAP command")) {
-                    logger.error("Failed to acquire requested IRC capabilities!");
+                    logger.warn("Failed to acquire requested IRC capabilities!");
                 } else if (rawMessage.contains(":tmi.twitch.tv CAP * ACK :")) {
                     List<String> capabilities = Arrays.asList(rawMessage.replace(":tmi.twitch.tv CAP * ACK :", "").split(" "));
                     capabilities.forEach(cap -> logger.trace("Acquired chat capability: " + cap));
@@ -377,7 +377,7 @@ public class TwitchMi {
                     sendCommand("PONG :tmi.twitch.tv");
                     logger.trace("Responding to PING request!");
                 } else if (rawMessage.equals(":tmi.twitch.tv NOTICE * :Login authentication failed")) {
-                    logger.error("Invalid IRC Credentials. Login failed!");
+                    logger.warn("Invalid IRC Credentials. Login failed!");
                 } else {
                     try {
                         onIRCMessage(parseIRCMessage(rawMessage));

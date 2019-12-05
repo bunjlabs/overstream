@@ -46,17 +46,17 @@ public class NettyWebSocketClientHandler extends SimpleChannelInboundHandler<Obj
     }
 
     @Override
-    public void handlerAdded(final ChannelHandlerContext ctx) throws Exception {
+    public void handlerAdded(final ChannelHandlerContext ctx) {
         handshakeFuture = ctx.newPromise();
     }
 
     @Override
-    public void channelActive(final ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(final ChannelHandlerContext ctx) {
         handshaker.handshake(ctx.channel());
     }
 
     @Override
-    public void channelInactive(final ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(final ChannelHandlerContext ctx) {
         handler.onClose(webSocket, -1, "no reason", true);
     }
 
