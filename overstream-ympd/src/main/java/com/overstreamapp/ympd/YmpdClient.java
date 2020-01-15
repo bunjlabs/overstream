@@ -19,12 +19,14 @@ package com.overstreamapp.ympd;
 import com.bunjlabs.fuga.inject.Inject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.overstreamapp.keeper.Keeper;
+import com.overstreamapp.keeper.State;
 import com.overstreamapp.network.EventLoopGroupManager;
-import com.overstreamapp.statemanager.*;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
-import org.bson.Document;
+import com.overstreamapp.ympd.state.PlayerState;
+import com.overstreamapp.ympd.state.SongState;
 import org.slf4j.Logger;
 
 import java.net.URI;
@@ -37,27 +39,25 @@ public class YmpdClient {
     private final YmpdClientSettings settings;
     private final WebSocketClient webSocketClient;
     private final EventLoopGroupManager loopGroupManager;
-    private final StateManager stateManager;
     private final Handler webSocketHandler;
     private final ObjectMapper mapper;
-    private final State songState;
-    private final State playerState;
+    private final State<SongState> songState;
+    private final State<PlayerState> playerState;
 
     private ConnectionState state = ConnectionState.DISCONNECTED;
     private WebSocket webSocket;
 
     @Inject
-    public YmpdClient(Logger logger, YmpdClientSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, StateManager stateManager) {
+    public YmpdClient(Logger logger, YmpdClientSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, Keeper keeper) {
         this.logger = logger;
         this.settings = settings;
         this.webSocketClient = webSocketClient;
         this.loopGroupManager = loopGroupManager;
         this.webSocketHandler = new Handler();
-        this.stateManager = stateManager;
         this.mapper = new ObjectMapper();
 
-        this.songState = stateManager.createState(new StateOptions("YmpdSong", StateType.STATE, settings.historySize(), SongStateObject::new));
-        this.playerState = stateManager.createState(new StateOptions("YmpdPlayer", StateType.STATE, PlayerStateObject::new));
+        this.songState = keeper.stateBuilder(SongState.class).persistenceListCapped().history(settings.historySize()).build();
+        this.playerState = keeper.stateBuilder(PlayerState.class).persistenceTransient().build();
     }
 
     public void connect() {
@@ -87,16 +87,16 @@ public class YmpdClient {
         logger.debug("Received message: {}", data);
 
         if ("song_change".equals(type)) {
-            YmpdSong song = new YmpdSong(
+            SongState song = new SongState(
                     data.get("pos").asInt(0),
                     data.get("title").asText(""),
                     data.get("artist").asText(""),
                     data.get("album").asText("")
             );
 
-            this.songState.push(new SongStateObject(song));
+            this.songState.push(song);
         } else if ("state".equals(type)) {
-            this.playerState.push(new PlayerStateObject(
+            this.playerState.push(new PlayerState(
                     data.get("state").asInt(0),
                     data.get("totalTime").asInt(0),
                     data.get("elapsedTime").asInt(0)
@@ -159,63 +159,4 @@ public class YmpdClient {
     }
 
 
-    public static class PlayerStateObject implements StateObject {
-        private int state;
-        private int totalTime;
-        private int elapsedTime;
-
-        public PlayerStateObject() {
-        }
-
-        public PlayerStateObject(int state, int totalTime, int elapsedTime) {
-            this.state = state;
-            this.totalTime = totalTime;
-            this.elapsedTime = elapsedTime;
-        }
-
-        @Override
-        public void save(Document document) {
-            document.put("state", state);
-            document.put("totalTime", totalTime);
-            document.put("elapsedTime", elapsedTime);
-        }
-
-        @Override
-        public void load(Document document) {
-            state = document.getInteger("state");
-            totalTime = document.getInteger("totalTime");
-            elapsedTime = document.getInteger("elapsedTime");
-        }
-    }
-
-
-    public static class SongStateObject implements StateObject {
-
-        private YmpdSong song;
-
-        public SongStateObject() {
-        }
-
-        public SongStateObject(YmpdSong song) {
-            this.song = song;
-        }
-
-        @Override
-        public void save(Document document) {
-            document.put("position", song.getPosition());
-            document.put("title", song.getTitle());
-            document.put("artist", song.getArtist());
-            document.put("album", song.getAlbum());
-        }
-
-        @Override
-        public void load(Document document) {
-            this.song = new YmpdSong(
-                    document.getInteger("position"),
-                    document.getString("title"),
-                    document.getString("artist"),
-                    document.getString("album")
-            );
-        }
-    }
 }

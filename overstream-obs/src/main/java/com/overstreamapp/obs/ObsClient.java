@@ -18,13 +18,16 @@ package com.overstreamapp.obs;
 
 import com.bunjlabs.fuga.inject.Inject;
 import com.google.gson.*;
+import com.overstreamapp.keeper.Keeper;
+import com.overstreamapp.keeper.State;
 import com.overstreamapp.network.EventLoopGroupManager;
-import com.overstreamapp.obs.event.ObsEvent;
-import com.overstreamapp.obs.event.ObsHeartbeatEvent;
-import com.overstreamapp.obs.event.ObsStreamStatusEvent;
+import com.overstreamapp.obs.obsevent.ObsEvent;
+import com.overstreamapp.obs.obsevent.ObsHeartbeatEvent;
+import com.overstreamapp.obs.obsevent.ObsStreamStatusEvent;
 import com.overstreamapp.obs.request.ObsRequest;
 import com.overstreamapp.obs.request.ObsSetHeartbeatRequest;
-import com.overstreamapp.statemanager.*;
+import com.overstreamapp.obs.state.ObsHeartbeatState;
+import com.overstreamapp.obs.state.ObsStreamStatusState;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
@@ -42,13 +45,13 @@ public class ObsClient {
     private final EventLoopGroupManager loopGroupManager;
     private final WebSocketHandler webSocketHandler;
     private final Gson gson;
-    private final State heartbeatState;
-    private final State streamStatusState;
+    private final State<ObsHeartbeatState> heartbeatState;
+    private final State<ObsStreamStatusState> streamStatusState;
     private WebSocket webSocket;
     private ConnectionState state = ConnectionState.DISCONNECTED;
 
     @Inject
-    public ObsClient(Logger logger, ObsSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, StateManager stateManager) {
+    public ObsClient(Logger logger, ObsSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, Keeper keeper) {
         this.logger = logger;
         this.settings = settings;
         this.webSocketClient = webSocketClient;
@@ -56,8 +59,8 @@ public class ObsClient {
         this.webSocketHandler = new Handler();
         this.gson = new GsonBuilder().registerTypeAdapter(ObsEvent.class, new ObsEventDeserializer()).create();
 
-        this.heartbeatState = stateManager.createState(new StateOptions("ObsHeartbeat", StateType.STATE, ObsHeartbeatState::new));
-        this.streamStatusState = stateManager.createState(new StateOptions("ObsStreamStatus", StateType.STATE, ObsStreamStatusState::new));
+        this.heartbeatState = keeper.stateBuilder(ObsHeartbeatState.class).persistenceTransient().build();
+        this.streamStatusState = keeper.stateBuilder(ObsStreamStatusState.class).persistenceTransient().build();
     }
 
     public void connect() {
@@ -153,16 +156,11 @@ public class ObsClient {
     private void onObsEvent(ObsEvent event) {
         if (event instanceof ObsHeartbeatEvent) {
             var heartbeatEvent = (ObsHeartbeatEvent) event;
-            var heartbeat = new ObsHeartbeatState();
-            heartbeat.heartbeat = heartbeatEvent;
-
-            heartbeatState.push(heartbeat);
-        } else if(event instanceof ObsStreamStatusEvent) {
+            heartbeatState.push(new ObsHeartbeatState(heartbeatEvent));
+        } else if (event instanceof ObsStreamStatusEvent) {
             var streamStatusEvent = (ObsStreamStatusEvent) event;
-            var streamStatus = new ObsStreamStatusState();
-            streamStatus.streamStatus = streamStatusEvent;
 
-            streamStatusState.push(streamStatus);
+            streamStatusState.push(new ObsStreamStatusState(streamStatusEvent));
         }
     }
 
@@ -185,11 +183,4 @@ public class ObsClient {
         }
     }
 
-    private static class ObsHeartbeatState extends EventObject {
-        private ObsHeartbeatEvent heartbeat;
-    }
-
-    private static class ObsStreamStatusState extends EventObject {
-        private ObsStreamStatusEvent streamStatus;
-    }
 }

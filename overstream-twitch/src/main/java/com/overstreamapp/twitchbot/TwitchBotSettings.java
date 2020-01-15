@@ -16,6 +16,7 @@
 
 package com.overstreamapp.twitchbot;
 
+import com.bunjlabs.fuga.settings.SettingDefault;
 import com.bunjlabs.fuga.settings.SettingName;
 import com.bunjlabs.fuga.settings.Settings;
 
@@ -26,4 +27,7 @@ public interface TwitchBotSettings {
     @SettingName("channels")
     List<String> channels();
 
+    @SettingName("chat-history")
+    @SettingDefault("1000")
+    int chatHistory();
 }

@@ -17,14 +17,14 @@
 package com.overstreamapp.messageserver.messages;
 
 
-import com.overstreamapp.statemanager.StateOptions;
-import com.overstreamapp.statemanager.StateObject;
+import com.overstreamapp.keeper.StateInfo;
+import com.overstreamapp.keeper.StateObject;
 
 public class StateMessage extends Message {
     private final String name;
     private final StateObject state;
 
-    public StateMessage(StateOptions info, StateObject stateObject) {
+    public StateMessage(StateInfo info, StateObject stateObject) {
         super("State");
         this.name = info.getName();
         this.state = stateObject;

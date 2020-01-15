@@ -16,13 +16,16 @@
 
 package com.overstreamapp;
 
+import com.bunjlabs.fuga.settings.SettingDefault;
 import com.bunjlabs.fuga.settings.Settings;
 
-@Settings("___app")
+@Settings("___app___")
 public interface AppInfo {
 
+    @SettingDefault("overstream")
     String name();
 
+    @SettingDefault("n/a")
     String version();
 }
 

@@ -84,4 +84,40 @@ public class ObsStats {
     public double getFreeDiskSpace() {
         return freeDiskSpace;
     }
+
+    public void setFps(double fps) {
+        this.fps = fps;
+    }
+
+    public void setRenderTotalFrames(int renderTotalFrames) {
+        this.renderTotalFrames = renderTotalFrames;
+    }
+
+    public void setRenderMissedFrames(int renderMissedFrames) {
+        this.renderMissedFrames = renderMissedFrames;
+    }
+
+    public void setOutputTotalFrames(int outputTotalFrames) {
+        this.outputTotalFrames = outputTotalFrames;
+    }
+
+    public void setOutputSkippedFrames(int outputSkippedFrames) {
+        this.outputSkippedFrames = outputSkippedFrames;
+    }
+
+    public void setAverageFrameTime(double averageFrameTime) {
+        this.averageFrameTime = averageFrameTime;
+    }
+
+    public void setCpuUsage(double cpuUsage) {
+        this.cpuUsage = cpuUsage;
+    }
+
+    public void setMemoryUsage(double memoryUsage) {
+        this.memoryUsage = memoryUsage;
+    }
+
+    public void setFreeDiskSpace(double freeDiskSpace) {
+        this.freeDiskSpace = freeDiskSpace;
+    }
 }

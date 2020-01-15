@@ -19,8 +19,9 @@ package com.overstreamapp.messageserver;
 import com.bunjlabs.fuga.inject.Inject;
 import com.google.gson.Gson;
 import com.overstreamapp.AppInfo;
+import com.overstreamapp.messageserver.event.NewConnectionEvent;
 import com.overstreamapp.messageserver.messages.*;
-import com.overstreamapp.statemanager.*;
+import com.overstreamapp.keeper.*;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.server.WebSocketServer;
@@ -39,48 +40,62 @@ public class MessageServer {
     private final MessageServerSettings settings;
     private AppInfo appInfo;
     private final WebSocketServer webSocketServer;
-    private final StateManager stateManager;
+    private final Keeper keeper;
     private final Gson gson;
     private final WebSocketHandler webSocketHandler;
-    private final State connectionEvent;
+    private final Event<NewConnectionEvent> connectionEvent;
 
     @Inject
-    public MessageServer(Logger log, AppInfo appInfo, WebSocketServer webSocketServer, StateManager stateManager, MessageServerSettings settings) {
+    public MessageServer(Logger log, AppInfo appInfo, WebSocketServer webSocketServer, Keeper keeper, MessageServerSettings settings) {
         this.log = log;
         this.appInfo = appInfo;
         this.webSocketServer = webSocketServer;
-        this.stateManager = stateManager;
+        this.keeper = keeper;
         this.settings = settings;
 
         this.gson = new Gson();
         this.webSocketHandler = new Handler();
 
-        this.connectionEvent = stateManager.createState(new StateOptions("OverStreamNewConnection", StateType.EVENT, NewConnectionEvent::new));
+        this.connectionEvent = keeper.eventBuilder(NewConnectionEvent.class).build();
     }
 
     public void start() {
         SocketAddress bindAddress = new InetSocketAddress(settings.bindHost(), settings.bindPort());
         webSocketServer.start(bindAddress, webSocketHandler);
 
-        stateManager.subscribeAll(this::onStateMessage);
+        keeper.subscribeAll(this::onStateChange);
+        keeper.subscribeAll(this::onEvent);
 
         log.info("Started on {}", bindAddress);
     }
 
-    private void onStateMessage(StateOptions info, StateObject stateObject) {
+
+    private void onStateChange(StateInfo info, StateObject stateObject) {
         clients.forEach(c -> c.send(compileStateObject(info, stateObject)));
     }
 
-    private String compileStateObject(StateOptions info, StateObject stateObject) {
+    private void onEvent(EventInfo info, EventObject eventObject) {
+        clients.forEach(c -> c.send(compileEventObject(info, eventObject)));
+    }
+
+    private String compileStateObject(StateInfo info, StateObject stateObject) {
         return gson.toJson(new StateMessage(info, stateObject));
     }
 
-    private String compileStateBurstObject(StateOptions info, StateObject stateObject) {
+    private String compileStateBurstObject(StateInfo info, StateObject stateObject) {
         return gson.toJson(new StateBurstMessage(info, stateObject));
     }
 
-    private String compileStateInfo(StateOptions info) {
-        return gson.toJson(new StateOptionsMessage(info));
+    private String compileStateInfo(StateInfo info) {
+        return gson.toJson(new StateInfoMessage(info));
+    }
+
+    private String compileEventInfo(EventInfo info) {
+        return gson.toJson(new EventInfoMessage(info));
+    }
+
+    private String compileEventObject(EventInfo info, EventObject eventObject) {
+        return gson.toJson(new EventMessage(info, eventObject));
     }
 
     private String compileReady() {
@@ -96,11 +111,12 @@ public class MessageServer {
         @Override
         public void onOpen(WebSocket socket) {
             clients.add(socket);
-            stateManager.getAllStateOption().forEach(info -> socket.send(compileStateInfo(info)));
-            stateManager.pushAll((info, stateObject) -> socket.send(compileStateBurstObject(info, stateObject)));
+            keeper.getAllStateInfo().forEach(info -> socket.send(compileStateInfo(info)));
+            keeper.getAllEventInfo().forEach(info -> socket.send(compileEventInfo(info)));
+            keeper.burstState((info, stateObject) -> socket.send(compileStateBurstObject(info, stateObject)));
             socket.send(compileReady());
 
-            connectionEvent.push(new NewConnectionEvent(socket.getRemoteSocketAddress().getHostString()));
+            connectionEvent.fire(new NewConnectionEvent(socket.getRemoteSocketAddress().getHostString()));
 
             log.info("Client connected {}", socket.getRemoteSocketAddress());
         }
@@ -136,14 +152,4 @@ public class MessageServer {
         }
     }
 
-    private static class NewConnectionEvent extends EventObject {
-        private String host;
-
-        public NewConnectionEvent() {
-        }
-
-        public NewConnectionEvent(String host) {
-            this.host = host;
-        }
-    }
 }

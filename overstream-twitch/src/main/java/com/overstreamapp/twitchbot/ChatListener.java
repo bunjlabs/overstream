@@ -16,7 +16,7 @@
 
 package com.overstreamapp.twitchbot;
 
-import com.overstreamapp.twitch.ChatMessage;
+import com.overstreamapp.twitchmi.ChatMessage;
 
 public interface ChatListener {
     void onChat(ChatMessage message);

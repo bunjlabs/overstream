@@ -28,18 +28,19 @@ import com.overstreamapp.groovy.GroovyScripts;
 import com.overstreamapp.groovy.GroovyUnit;
 import com.overstreamapp.messageserver.MessageServer;
 import com.overstreamapp.messageserver.MessageServerUnit;
+import com.overstreamapp.mongodb.MongoUnit;
+import com.overstreamapp.twitchbot.DefaultTwitchBot;
+import com.overstreamapp.twitchmi.DefaultTwitchMi;
 import com.overstreamapp.ympd.YmpdClient;
 import com.overstreamapp.ympd.YmpdClientUnit;
 import com.overstreamapp.network.EventLoopGroupManagerUnit;
 import com.overstreamapp.obs.ObsClient;
 import com.overstreamapp.obs.ObsUnit;
 import com.overstreamapp.osc.NettyOscClientUnit;
-import com.overstreamapp.statemanager.StateManagerUnit;
+import com.overstreamapp.keeper.KeeperUnit;
 import com.overstreamapp.streamlabs.StreamlabsClient;
 import com.overstreamapp.streamlabs.StreamlabsUnit;
-import com.overstreamapp.twitch.TwitchMi;
-import com.overstreamapp.twitch.TwitchMiUnit;
-import com.overstreamapp.twitchbot.TwitchBot;
+import com.overstreamapp.twitchmi.TwitchMiUnit;
 import com.overstreamapp.twitchbot.TwitchBotUnit;
 import com.overstreamapp.websocket.client.netty.NettyWebSocketClientUnit;
 import com.overstreamapp.websocket.server.NettyWebSocketServerUnit;
@@ -73,27 +74,35 @@ public class OverStreamApp {
 
         var modules = new ArrayList<AppModule>();
         modules.add(new AppModule(settings.modulesEnabled().messageServer(), new MessageServerUnit(), (injector -> {
+            logger.info("Enabling MessageServer");
             injector.getInstance(MessageServer.class).start();
         })));
         modules.add(new AppModule(settings.modulesEnabled().x32MixerClient(), new X32MixerClientUnit(), (injector -> {
+            logger.info("Enabling X32MixerClient");
             injector.getInstance(X32MixerClient.class).connect();
         })));
         modules.add(new AppModule(settings.modulesEnabled().mpdClient(), new YmpdClientUnit(), (injector -> {
+            logger.info("Enabling YmpdClient");
             injector.getInstance(YmpdClient.class).connect();
         })));
         modules.add(new AppModule(settings.modulesEnabled().twitchMiClient(), new TwitchMiUnit(), (injector -> {
-            injector.getInstance(TwitchMi.class).connect();
+            logger.info("Enabling TwitchMi");
+            injector.getInstance(DefaultTwitchMi.class).connect();
         })));
         modules.add(new AppModule(settings.modulesEnabled().twitchBot(), new TwitchBotUnit(), (injector -> {
-            injector.getInstance(TwitchBot.class).start();
+            logger.info("Enabling TwitchBot");
+            injector.getInstance(DefaultTwitchBot.class).start();
         })));
         modules.add(new AppModule(settings.modulesEnabled().streamlabsSocket(), new StreamlabsUnit(), (injector -> {
+            logger.info("Enabling StreamlabsClient");
             injector.getInstance(StreamlabsClient.class).connect();
         })));
         modules.add(new AppModule(settings.modulesEnabled().obsClient(), new ObsUnit(), (injector -> {
+            logger.info("Enabling ObsClient");
             injector.getInstance(ObsClient.class).connect();
         })));
         modules.add(new AppModule(settings.modulesEnabled().groovy(), new GroovyUnit(), (injector -> {
+            logger.info("Enabling GroovyScripts");
             injector.getInstance(GroovyScripts.class).start();
         })));
 
@@ -121,11 +130,12 @@ public class OverStreamApp {
     }
 
     private void configure(Configuration c) {
-        c.install(new StateManagerUnit());
+        c.install(new KeeperUnit());
         c.install(new EventLoopGroupManagerUnit());
         c.install(new NettyWebSocketServerUnit());
         c.install(new NettyWebSocketClientUnit());
         c.install(new NettyOscClientUnit());
+        c.install(new MongoUnit());
         c.bind(OverStreamApp.class).toInstance(this);
     }
 

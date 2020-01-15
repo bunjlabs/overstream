@@ -38,4 +38,8 @@ public class GroovyRuntime {
     public GroovyShell getGroovyShell() {
         return groovyShell;
     }
+
+    public void export(String name, Object value) {
+        this.groovyShell.setProperty(name, value);
+    }
 }

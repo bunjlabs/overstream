@@ -21,7 +21,6 @@ import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
@@ -67,10 +66,19 @@ public class NettyWebSocketClient implements WebSocketClient {
                 .channel(NioSocketChannel.class)
                 .handler(new NettyWebSocketClientInitializer(uri, sslContext, handler));
 
-        try {
-            b.connect(uri.getHost(), uri.getPort()).sync();
-        } catch (InterruptedException e) {
+        b.connect(uri.getHost(), uri.getPort());
+
+            /*
+            try {
+            .addListener(future -> {
+                if(!future.isSuccess()) {
+                    handler.onClose(null, -1, "Unable to connect");
+                }
+            });
+            } catch (InterruptedException e) {
             logger.error("Unable to start netty websocket server", e);
         }
+             */
+
     }
 }

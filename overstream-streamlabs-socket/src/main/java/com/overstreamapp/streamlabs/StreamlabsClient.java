@@ -20,12 +20,12 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.overstreamapp.network.EventLoopGroupManager;
-import com.overstreamapp.statemanager.*;
+import com.overstreamapp.keeper.*;
+import com.overstreamapp.streamlabs.events.*;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
 import io.netty.util.concurrent.ScheduledFuture;
-import org.bson.Document;
 import org.slf4j.Logger;
 
 import java.net.URI;
@@ -40,12 +40,12 @@ public class StreamlabsClient {
     private final WebSocketHandler webSocketHandler;
     private final ObjectMapper objectMapper;
 
-    private final State twitchSubState;
-    private final State twitchResubState;
-    private final State twitchFollowState;
-    private final State twitchHostState;
-    private final State twitchBitsState;
-    private final State twitchRaidState;
+    private final Event<TwitchSub> twitchSubEvent;
+    private final Event<TwitchResub> twitchResubEvent;
+    private final Event<TwitchFollow> twitchFollowEvent;
+    private final Event<TwitchHost> twitchHostEvent;
+    private final Event<TwitchBits> twitchBitsEvent;
+    private final Event<TwitchRaid> twitchRaidEvent;
 
     private URI uri;
     private WebSocket webSocket;
@@ -53,7 +53,7 @@ public class StreamlabsClient {
     private ConnectionState state = ConnectionState.DISCONNECTED;
 
     @Inject
-    public StreamlabsClient(Logger logger, StreamlabsSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, StateManager stateManager) {
+    public StreamlabsClient(Logger logger, StreamlabsSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, Keeper keeper) {
         this.logger = logger;
         this.settings = settings;
         this.webSocketClient = webSocketClient;
@@ -61,12 +61,12 @@ public class StreamlabsClient {
         this.webSocketHandler = new Handler();
         this.objectMapper = new ObjectMapper();
 
-        this.twitchSubState = stateManager.createState(new StateOptions("TwitchSub", StateType.EVENT, HistoryStrategy.LIMIT, 10, TwitchSubObject::new));
-        this.twitchResubState = stateManager.createState(new StateOptions("TwitchResub", StateType.EVENT, HistoryStrategy.LIMIT, 10, TwitchResubObject::new));
-        this.twitchFollowState = stateManager.createState(new StateOptions("TwitchFollow", StateType.EVENT, HistoryStrategy.LIMIT, 10, TwitchFollowObject::new));
-        this.twitchHostState = stateManager.createState(new StateOptions("TwitchHost", StateType.EVENT, HistoryStrategy.LIMIT, 10, TwitchHostObject::new));
-        this.twitchBitsState = stateManager.createState(new StateOptions("TwitchBits", StateType.EVENT, HistoryStrategy.LIMIT, 10, TwitchBitsObject::new));
-        this.twitchRaidState = stateManager.createState(new StateOptions("TwitchRaid", StateType.EVENT, HistoryStrategy.LIMIT, 10, TwitchRaidObject::new));
+        this.twitchSubEvent = keeper.eventBuilder(TwitchSub.class).build();
+        this.twitchResubEvent = keeper.eventBuilder(TwitchResub.class).build();
+        this.twitchFollowEvent = keeper.eventBuilder(TwitchFollow.class).build();
+        this.twitchHostEvent = keeper.eventBuilder(TwitchHost.class).build();
+        this.twitchBitsEvent = keeper.eventBuilder(TwitchBits.class).build();
+        this.twitchRaidEvent = keeper.eventBuilder(TwitchRaid.class).build();
     }
 
     public void connect() {
@@ -120,53 +120,53 @@ public class StreamlabsClient {
         event.get("message").forEach(m -> {
             switch (eventType) {
                 case "subscription":
-                    var subscription = new TwitchSubObject();
+                    var subscription = new TwitchSub();
                     subscription.name = jsonNodeGetOrDefault(m, "name", "");
                     subscription.months = jsonNodeGetOrDefault(m, "months", 0);
                     subscription.message = jsonNodeGetOrDefault(m, "message", "");
-                    subscription.sub_plan = jsonNodeGetOrDefault(m, "sub_plan", "");
-                    subscription.sub_plan_name = jsonNodeGetOrDefault(m, "sub_plan_name", "");
-                    subscription.sub_type = jsonNodeGetOrDefault(m, "sub_type", "");
-                    twitchSubState.push(subscription);
+                    subscription.subPlan = jsonNodeGetOrDefault(m, "sub_plan", "");
+                    subscription.subPlanName = jsonNodeGetOrDefault(m, "sub_plan_name", "");
+                    subscription.subType = jsonNodeGetOrDefault(m, "sub_type", "");
+                    twitchSubEvent.fire(subscription);
                     break;
                 case "resub":
-                    var resub = new TwitchResubObject();
+                    var resub = new TwitchResub();
                     resub.name = jsonNodeGetOrDefault(m, "name", "");
                     resub.months = jsonNodeGetOrDefault(m, "months", 0);
                     resub.streak_months = jsonNodeGetOrDefault(m, "streak_months", 0);
                     resub.message = jsonNodeGetOrDefault(m, "message", "");
-                    resub.sub_plan = jsonNodeGetOrDefault(m, "sub_plan", "");
-                    resub.sub_plan_name = jsonNodeGetOrDefault(m, "sub_plan_name", "");
-                    resub.sub_type = jsonNodeGetOrDefault(m, "sub_type", "");
+                    resub.subPlan = jsonNodeGetOrDefault(m, "sub_plan", "");
+                    resub.subPlanName = jsonNodeGetOrDefault(m, "sub_plan_name", "");
+                    resub.subType = jsonNodeGetOrDefault(m, "sub_type", "");
                     resub.amount = jsonNodeGetOrDefault(m, "amount", 0);
-                    twitchSubState.push(resub);
+                    twitchResubEvent.fire(resub);
                     break;
                 case "follow":
-                    var follow = new TwitchFollowObject();
+                    var follow = new TwitchFollow();
                     follow.name = jsonNodeGetOrDefault(m, "name", "");
-                    follow.created_at = jsonNodeGetOrDefault(m, "created_at", "");
-                    twitchFollowState.push(follow);
+                    follow.createdAt = jsonNodeGetOrDefault(m, "created_at", "");
+                    twitchFollowEvent.fire(follow);
                     break;
                 case "host":
-                    var host = new TwitchHostObject();
+                    var host = new TwitchHost();
                     host.name = jsonNodeGetOrDefault(m, "name", "");
                     host.viewers = jsonNodeGetOrDefault(m, "viewers", 0);
                     host.type = jsonNodeGetOrDefault(m, "type", "");
-                    twitchHostState.push(host);
+                    twitchHostEvent.fire(host);
                     break;
                 case "bits":
-                    var bits = new TwitchBitsObject();
+                    var bits = new TwitchBits();
                     bits.name = jsonNodeGetOrDefault(m, "name", "");
                     bits.amount = jsonNodeGetOrDefault(m, "amount", 0);
                     bits.message = jsonNodeGetOrDefault(m, "message", "");
                     bits.currency = jsonNodeGetOrDefault(m, "currency", "");
-                    twitchBitsState.push(bits);
+                    twitchBitsEvent.fire(bits);
                     break;
                 case "raid":
-                    var raid = new TwitchRaidObject();
+                    var raid = new TwitchRaid();
                     raid.name = jsonNodeGetOrDefault(m, "name", "");
                     raid.raiders = jsonNodeGetOrDefault(m, "raiders", 0);
-                    twitchRaidState.push(raid);
+                    twitchRaidEvent.fire(raid);
                     break;
                 default:
                     logger.trace("Unsupported event type {}", eventType);
@@ -255,152 +255,4 @@ public class StreamlabsClient {
         }
     }
 
-    private static class TwitchSubObject implements StateObject {
-        private String name;
-        private int months;
-        private String message;
-        private String sub_plan;
-        private String sub_plan_name;
-        private String sub_type;
-
-        TwitchSubObject() {
-        }
-
-        @Override
-        public void save(Document document) {
-            document.put("name", name);
-            document.put("months", months);
-            document.put("message", message);
-            document.put("sub_plan", sub_plan);
-            document.put("sub_plan_name", sub_plan_name);
-            document.put("sub_type", sub_type);
-        }
-
-        @Override
-        public void load(Document document) {
-            name = document.getString("name");
-            months = document.getInteger("months", 0);
-            message = document.getString("message");
-            sub_plan = document.getString("sub_plan");
-            sub_plan_name = document.getString("sub_plan_name");
-            sub_type = document.getString("sub_type");
-        }
-    }
-
-    private static class TwitchResubObject implements StateObject {
-        private String name;
-        private int months;
-        private int streak_months;
-        private String message;
-        private String sub_plan;
-        private String sub_plan_name;
-        private String sub_type;
-        private int amount;
-
-        TwitchResubObject() {
-        }
-
-        @Override
-        public void save(Document document) {
-            document.put("name", name);
-            document.put("months", months);
-            document.put("streak_months", streak_months);
-            document.put("message", message);
-            document.put("sub_plan", sub_plan);
-            document.put("sub_plan_name", sub_plan_name);
-            document.put("sub_type", sub_type);
-            document.put("amount", amount);
-        }
-
-        @Override
-        public void load(Document document) {
-            name = document.getString("name");
-            months = document.getInteger("months", 0);
-            streak_months = document.getInteger("streak_months", 0);
-            message = document.getString("message");
-            sub_plan = document.getString("sub_plan");
-            sub_plan_name = document.getString("sub_plan_name");
-            sub_type = document.getString("sub_type");
-            amount = document.getInteger("amount", 0);
-        }
-    }
-
-    private static class TwitchFollowObject implements StateObject {
-        private String name;
-        private String created_at;
-
-        @Override
-        public void save(Document document) {
-            document.put("name", name);
-            document.put("created_at", created_at);
-
-        }
-
-        @Override
-        public void load(Document document) {
-            name = document.getString("name");
-            created_at = document.getString("created_at");
-        }
-    }
-
-    private static class TwitchHostObject implements StateObject {
-        private String name;
-        private int viewers;
-        private String type;
-
-        @Override
-        public void save(Document document) {
-            document.put("name", name);
-            document.put("viewers", viewers);
-            document.put("type", type);
-
-        }
-
-        @Override
-        public void load(Document document) {
-            name = document.getString("name");
-            viewers = document.getInteger("viewers", 0);
-            type = document.getString("type");
-        }
-    }
-
-    private static class TwitchBitsObject implements StateObject {
-        private String name;
-        private int amount;
-        private String message;
-        public String currency;
-
-        @Override
-        public void save(Document document) {
-            document.put("name", name);
-            document.put("amount", amount);
-            document.put("message", message);
-            document.put("currency", currency);
-        }
-
-        @Override
-        public void load(Document document) {
-            name = document.getString("name");
-            amount = document.getInteger("amount", 0);
-            message = document.getString("message");
-            currency = document.getString("currency");
-        }
-    }
-
-    private static class TwitchRaidObject implements StateObject {
-        private String name;
-        private int raiders;
-
-        @Override
-        public void save(Document document) {
-            document.put("name", name);
-            document.put("raiders", raiders);
-        }
-
-        @Override
-        public void load(Document document) {
-            name = document.getString("name");
-            raiders = document.getInteger("raiders", 0);
-        }
-    }
 }
