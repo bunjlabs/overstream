@@ -14,32 +14,33 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.groovy;
+package com.overstreamapp.x32mixer;
 
-import com.bunjlabs.fuga.context.ApplicationContext;
 import com.bunjlabs.fuga.inject.Inject;
 import com.bunjlabs.fuga.inject.Injector;
-import groovy.lang.Binding;
-import groovy.lang.GroovyShell;
+import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.AppModule;
+import com.overstreamapp.groovy.GroovyRuntime;
 
-public class GroovyRuntime {
+import java.util.Collections;
+import java.util.List;
 
-    private final GroovyShell groovyShell;
+public class X32MixerAppModule implements AppModule {
+
+    private final GroovyRuntime groovyRuntime;
 
     @Inject
-    public GroovyRuntime(ApplicationContext context, Injector injector) {
-        Binding binding = new Binding();
-        binding.setProperty("Context", context);
-        binding.setProperty("Injector", injector);
-
-        this.groovyShell = new GroovyShell(binding);
+    public X32MixerAppModule(GroovyRuntime groovyRuntime) {
+        this.groovyRuntime = groovyRuntime;
     }
 
-    public GroovyShell getGroovyShell() {
-        return groovyShell;
+    @Override
+    public List<Unit> getUnits() {
+        return Collections.singletonList(new X32MixerClientUnit());
     }
 
-    public void export(String name, Object value) {
-        this.groovyShell.setProperty(name, value);
+    @Override
+    public void init(Injector injector) {
+        groovyRuntime.export("X32Mixer", injector.getInstance(X32MixerClient.class));
     }
 }

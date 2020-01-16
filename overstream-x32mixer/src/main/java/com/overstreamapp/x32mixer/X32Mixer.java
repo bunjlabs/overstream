@@ -18,13 +18,11 @@ package com.overstreamapp.x32mixer;
 
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.osc.OscChannel;
-import com.overstreamapp.osc.OscClient;
 import com.overstreamapp.osc.OscWriteException;
 import com.overstreamapp.osc.types.OscMessage;
 import com.overstreamapp.osc.types.OscType;
 import org.slf4j.Logger;
 
-import java.net.SocketAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -34,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 class X32Mixer {
     private final Logger logger;
 
+    private final X32OscHandler x32OscHandler;
     private final Map<String, X32Subscription<OscType>> subscriptions;
     private final List<X32Meter> meters;
 
@@ -43,6 +42,7 @@ class X32Mixer {
         this.logger = logger;
         this.oscChannel = oscChannel;
 
+        this.x32OscHandler = new X32OscHandler(this);
         this.subscriptions = new ConcurrentHashMap<>();
         this.meters = new CopyOnWriteArrayList<>();
 
@@ -51,26 +51,49 @@ class X32Mixer {
     }
 
     private void onTimer() {
-        if(this.subscriptions.isEmpty() || this.meters.isEmpty()) return;
+        if (this.subscriptions.isEmpty() || this.meters.isEmpty()) return;
 
-        logger.trace("Renew subscriptions");
+        if (x32OscHandler.getLastMessageTime() > 0 && System.currentTimeMillis() - x32OscHandler.getLastMessageTime() > 5000) {
+            logger.warn("No response from mixer. Renewing ...");
 
-        try {
-            oscChannel.send(new OscMessage("/renew"));
-        } catch (OscWriteException ex) {
-            logger.error("Unable to renew mixer subscriptions", ex);
+            subscriptions.values().forEach(sub -> enableSubscription(sub.getAddress()));
+            enableMeters();
+        } else {
+            logger.trace("Renew subscriptions");
+
+            try {
+                oscChannel.send(new OscMessage("/renew"));
+            } catch (OscWriteException ex) {
+                logger.error("Unable to renew mixer subscriptions", ex);
+            }
         }
+
+    }
+
+    X32OscHandler getX32OscHandler() {
+        return x32OscHandler;
     }
 
     @SuppressWarnings("unchecked")
     <T extends OscType> void subscribe(String address, X32SubscriptionListener<T> listener) {
-        send("/subscribe", address, 5);
+        enableSubscription(address);
 
-        X32Subscription<T> subscription = new X32Subscription<>(address, listener);
+        var subscription = new X32Subscription<>(address, listener);
         subscriptions.put(address, (X32Subscription<OscType>) subscription);
 
         logger.debug("Subscribed to {}", address);
     }
+
+
+    void meters(int channel, int type, float sensitivity, boolean latch, X32MeterListener listener) {
+        if (meters.isEmpty()) {
+            enableMeters();
+        }
+
+        meters.add(new X32Meter(channel, type, sensitivity, latch, listener));
+        logger.debug("Subscribed to meter({}, {}) ", channel, type);
+    }
+
 
     void fireSubscriptionUpdate(String address, OscType value) {
         var subscription = subscriptions.get(address);
@@ -80,21 +103,12 @@ class X32Mixer {
         }
     }
 
-    void meters(int channel, int type, float sensitivity, boolean latch, X32MeterListener listener) {
-        if (meters.isEmpty()) {
-            send("/meters", "/meters/1", 10);
-        }
-
-        X32Meter meter = new X32Meter(channel, type, sensitivity, latch, listener);
-        meters.add(meter);
-        logger.debug("Subscribed to meter({}, {}) ", channel, type);
-    }
-
     void fireMetersUpdate(float[] nativeFloats) {
         meters.forEach(s -> {
             s.onData(nativeFloats);
         });
     }
+
 
     private void send(String address, Object... arguments) {
         try {
@@ -104,4 +118,11 @@ class X32Mixer {
         }
     }
 
+    private void enableSubscription(String address) {
+        send("/subscribe", address, 5);
+    }
+
+    private void enableMeters() {
+        send("/meters", "/meters/1", 10);
+    }
 }

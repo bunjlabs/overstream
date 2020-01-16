@@ -29,4 +29,12 @@ public interface StreamlabsSettings {
 
     @SettingName("socket-token")
     String socketToken();
+
+    @SettingName("connect-timeout")
+    @SettingDefault("4000")
+    int connectTimeout();
+
+    @SettingName("reconnect-delay")
+    @SettingDefault("2000")
+    int reconnectDelay();
 }

@@ -71,10 +71,11 @@ public class StreamlabsClient {
 
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
-            this.state = ConnectionState.CONNECTING;
+            logger.info("Connecting to Streamlabs Socket API {} ...", settings.serverUri());
 
+            this.state = ConnectionState.CONNECTING;
             this.uri = URI.create(String.format(settings.serverUri(), settings.socketToken()));
-            this.webSocketClient.connect(this.uri, this.webSocketHandler);
+            this.webSocketClient.connect(this.uri, this.webSocketHandler, settings.connectTimeout());
         }
     }
 
@@ -85,15 +86,23 @@ public class StreamlabsClient {
                 this.pingScheduledFuture.cancel(false);
                 this.pingScheduledFuture.awaitUninterruptibly(1000);
             }
-            this.webSocket.close();
-            this.webSocket = null;
+
+            if(this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
         }
     }
 
     public void reconnect() {
-        state = ConnectionState.RECONNECTING;
-        disconnect();
-        connect();
+        if (state != ConnectionState.RECONNECTING) {
+            state = ConnectionState.RECONNECTING;
+            if (this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
+            loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, settings.reconnectDelay(), TimeUnit.MILLISECONDS);
+        }
     }
 
     private void sendPing() {
@@ -187,14 +196,14 @@ public class StreamlabsClient {
 
         @Override
         public void onOpen(WebSocket socket) {
-            logger.debug("Connecting to Streamlabs Socket API ...");
             StreamlabsClient.this.webSocket = socket;
             StreamlabsClient.this.state = ConnectionState.CONNECTING;
+            logger.info("Connected to Streamlabs Socket API");
         }
 
         @Override
         public void onClose(WebSocket socket, int code, String reason, boolean remote) {
-            if (state != ConnectionState.DISCONNECTING) {
+            if (state != ConnectionState.DISCONNECTING && state != ConnectionState.RECONNECTING) {
                 logger.info("Connection to Streamlabs Socket API lost: {} {}. Retrying ...", code, reason);
 
                 reconnect();
@@ -220,7 +229,7 @@ public class StreamlabsClient {
 
                     StreamlabsClient.this.state = ConnectionState.CONNECTED;
 
-                    logger.info("Connected to Streamlabs Socket API");
+                    logger.debug("Handshake successful");
                 } else if (message.startsWith("3")) {
                     logger.trace("<- PONG");
                 } else if (message.startsWith("42")) {
@@ -251,7 +260,7 @@ public class StreamlabsClient {
 
         @Override
         public void onStart() {
-            logger.info("Web socket client started");
+            logger.debug("Web socket client started");
         }
     }
 

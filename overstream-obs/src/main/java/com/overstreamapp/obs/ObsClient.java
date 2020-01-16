@@ -65,24 +65,32 @@ public class ObsClient {
 
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
-            this.state = ConnectionState.CONNECTING;
+            logger.info("Connecting to OBS {} ...", settings.serverUri());
 
-            this.webSocketClient.connect(URI.create(settings.serverUri()), this.webSocketHandler);
+            this.state = ConnectionState.CONNECTING;
+            this.webSocketClient.connect(URI.create(settings.serverUri()), this.webSocketHandler, settings.connectTimeout());
         }
     }
 
     public void disconnect() {
         if (state != ConnectionState.DISCONNECTED) {
             state = ConnectionState.DISCONNECTING;
-            this.webSocket.close();
-            this.webSocket = null;
+            if (this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
         }
     }
 
     public void reconnect() {
-        state = ConnectionState.RECONNECTING;
-        disconnect();
-        loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, 2, TimeUnit.SECONDS);
+        if (state != ConnectionState.RECONNECTING) {
+            state = ConnectionState.RECONNECTING;
+            if (this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
+            loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, settings.reconnectDelay(), TimeUnit.MILLISECONDS);
+        }
     }
 
     private void send(ObsRequest request) {
@@ -114,7 +122,7 @@ public class ObsClient {
 
         @Override
         public void onClose(WebSocket socket, int code, String reason, boolean remote) {
-            if (state != ConnectionState.DISCONNECTING) {
+            if (state != ConnectionState.DISCONNECTING && state != ConnectionState.RECONNECTING) {
                 logger.info("Connection to OBS lost: {} {}. Retrying ...", code, reason);
 
                 reconnect();

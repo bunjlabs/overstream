@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.keeper;
+package com.overstreamapp;
 
-import java.util.*;
+import com.bunjlabs.fuga.inject.Injector;
+import com.bunjlabs.fuga.inject.Unit;
 
-public class MapObject implements StateObject, EventObject {
+import java.util.List;
 
-    private final Map<String, Object> map = new HashMap<>();
+public interface AppModule {
+    List<Unit> getUnits();
 
-    public MapObject() {
-    }
-
-    public MapObject(Map<String, Object> map) {
-        this.map.putAll(map);
-    }
-
+    void init(Injector injector);
 }

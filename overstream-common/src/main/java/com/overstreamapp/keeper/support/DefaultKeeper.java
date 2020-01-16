@@ -49,7 +49,7 @@ public class DefaultKeeper implements Keeper {
     private final List<EventListener> eventListenersList;
 
     @Inject
-    public DefaultKeeper(Logger logger, KeeperSettings settings, MongoDatabase database) {
+    public DefaultKeeper(Logger logger, MongoDatabase database) {
         this.logger = logger;
 
         var codecRegistry = CodecRegistries.fromRegistries(

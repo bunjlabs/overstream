@@ -21,6 +21,7 @@ import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
 import io.netty.bootstrap.Bootstrap;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.ssl.SslContext;
@@ -43,7 +44,7 @@ public class NettyWebSocketClient implements WebSocketClient {
 
 
     @Override
-    public void connect(URI uri, WebSocketHandler handler) {
+    public void connect(URI uri, WebSocketHandler handler, int timeout) {
         EventLoopGroup workerGroup = loopGroupManager.getWorkerEventLoopGroup();
 
         String scheme = uri.getScheme() == null ? "ws" : uri.getScheme();
@@ -64,21 +65,19 @@ public class NettyWebSocketClient implements WebSocketClient {
         Bootstrap b = new Bootstrap();
         b.group(workerGroup)
                 .channel(NioSocketChannel.class)
+                .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
                 .handler(new NettyWebSocketClientInitializer(uri, sslContext, handler));
 
-        b.connect(uri.getHost(), uri.getPort());
+        //b.connect(uri.getHost(), uri.getPort());
 
-            /*
-            try {
-            .addListener(future -> {
-                if(!future.isSuccess()) {
-                    handler.onClose(null, -1, "Unable to connect");
-                }
-            });
-            } catch (InterruptedException e) {
-            logger.error("Unable to start netty websocket server", e);
+
+        b.connect(uri.getHost(), uri.getPort()).addListener(future -> {
+
+        if(!future.isSuccess()) {
+            handler.onClose(null, -1, "Unable to connect", false);
         }
-             */
+    });
+
 
     }
 }

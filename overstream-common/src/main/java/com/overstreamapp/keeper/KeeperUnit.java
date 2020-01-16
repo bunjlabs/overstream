@@ -25,8 +25,6 @@ public class KeeperUnit implements Unit {
 
     @Override
     public void setup(Configuration c) {
-        c.bind(KeeperSettings.class).auto();
-
         c.bind(DefaultKeeper.class).auto().in(Singleton.class);
         c.bind(Keeper.class).to(DefaultKeeper.class);
     }

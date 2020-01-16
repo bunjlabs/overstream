@@ -32,6 +32,10 @@ public class X32Subscription<T extends OscType> {
         this.value = null;
     }
 
+    public String getAddress() {
+        return address;
+    }
+
     public void onData(T newValue) {
         if (value == null || !value.equals(newValue)) {
             value = newValue;

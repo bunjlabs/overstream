@@ -61,7 +61,7 @@ public class X32MixerClient {
     }
 
     public void connect() {
-        oscClient.start(remoteAddress, new X32OscHandler(mixer));
+        oscClient.start(remoteAddress, this.mixer.getX32OscHandler());
 
         logger.info("Started with {}", remoteAddress);
     }

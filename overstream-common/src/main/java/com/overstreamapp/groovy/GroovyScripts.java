@@ -20,28 +20,37 @@ import com.bunjlabs.fuga.inject.Inject;
 import org.slf4j.Logger;
 
 import java.io.File;
+import java.nio.file.Path;
 
 public class GroovyScripts {
     private final Logger logger;
 
     private final GroovyRuntime runtime;
     private final GroovyScriptsSettings settings;
+    private final Path baseDirectory;
 
     @Inject
     public GroovyScripts(Logger logger, GroovyRuntime runtime, GroovyScriptsSettings settings) {
         this.logger = logger;
         this.runtime = runtime;
         this.settings = settings;
+
+        this.baseDirectory = Path.of(settings.baseDirectory());
     }
 
     public void start() {
-        for (String script : settings.run()) {
-            try {
-                logger.debug("Evaluating script {}", script);
-                runtime.getGroovyShell().evaluate(new File(script));
-            } catch (Throwable e) {
-                logger.error("Unable to evaluate groovy script {}", script, e);
+        for (String script : settings.load()) {
+            var scriptFile = baseDirectory.resolve(String.format("%s.groovy", script)).toFile();
+
+            if (scriptFile.isFile() && scriptFile.canRead()) {
+                try {
+                    logger.debug("Evaluating script {}", scriptFile);
+                    runtime.getGroovyShell().evaluate(scriptFile);
+                } catch (Throwable e) {
+                    logger.error("Unable to evaluate groovy script {}", scriptFile, e);
+                }
             }
+
         }
     }
 }

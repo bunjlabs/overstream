@@ -36,4 +36,12 @@ public interface TwitchMiSettings {
     @SettingName("emotes-uri")
     @SettingDefault("https://static-cdn.jtvnw.net/emoticons/v1/%s/1.0")
     String emotesUri();
+
+    @SettingName("connect-timeout")
+    @SettingDefault("4000")
+    int connectTimeout();
+
+    @SettingName("reconnect-delay")
+    @SettingDefault("2000")
+    int reconnectDelay();
 }

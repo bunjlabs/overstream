@@ -29,10 +29,6 @@ public interface AppSettings {
     ModulesEnabledSettings modulesEnabled();
 
     interface ModulesEnabledSettings {
-        @SettingName("groovy")
-        @SettingDefault("false")
-        boolean groovy();
-
         @SettingName("message-server")
         @SettingDefault("false")
         boolean messageServer();

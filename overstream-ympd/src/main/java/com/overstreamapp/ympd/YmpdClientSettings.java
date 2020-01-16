@@ -29,4 +29,13 @@ public interface YmpdClientSettings {
     @SettingName("history-size")
     @SettingDefault("20")
     int historySize();
+
+
+    @SettingName("connect-timeout")
+    @SettingDefault("4000")
+    int connectTimeout();
+
+    @SettingName("reconnect-delay")
+    @SettingDefault("2000")
+    int reconnectDelay();
 }

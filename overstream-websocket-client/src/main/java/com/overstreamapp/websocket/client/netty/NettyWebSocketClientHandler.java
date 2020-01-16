@@ -48,6 +48,8 @@ public class NettyWebSocketClientHandler extends SimpleChannelInboundHandler<Obj
     @Override
     public void handlerAdded(final ChannelHandlerContext ctx) throws Exception {
         handshakeFuture = ctx.newPromise();
+
+        this.handler.onStart();
     }
 
     @Override

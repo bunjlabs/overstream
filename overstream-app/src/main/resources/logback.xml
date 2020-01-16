@@ -27,7 +27,7 @@
     <logger name="org.mongodb" level="WARN"/>
     <logger name="org.bson" level="WARN"/>
     <logger name="com.bunjlabs.fuga" level="WARN"/>
-    <logger name="com.overstreamapp" level="TRACE"/>
+    <logger name="com.overstreamapp" level="DEBUG"/>
 
     <root  level="TRACE">
         <appender-ref ref="console"/>

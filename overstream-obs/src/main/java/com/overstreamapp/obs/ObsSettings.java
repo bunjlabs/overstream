@@ -26,4 +26,12 @@ public interface ObsSettings {
     @SettingName("server-uri")
     @SettingDefault("ws://localhost:4444")
     String serverUri();
+
+    @SettingName("connect-timeout")
+    @SettingDefault("4000")
+    int connectTimeout();
+
+    @SettingName("reconnect-delay")
+    @SettingDefault("2000")
+    int reconnectDelay();
 }

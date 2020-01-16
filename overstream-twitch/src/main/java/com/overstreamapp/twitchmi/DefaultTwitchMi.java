@@ -90,28 +90,34 @@ public class DefaultTwitchMi implements TwitchMi {
     @Override
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
+            logger.info("Connecting to Twitch MI {}.", settings.serverUri());
             this.state = ConnectionState.CONNECTING;
-            this.webSocketClient.connect(URI.create(settings.serverUri()), webSocketHandler);
+            this.webSocketClient.connect(URI.create(settings.serverUri()), webSocketHandler, settings.connectTimeout());
         }
     }
 
     @Override
     public void disconnect() {
-        if (state == ConnectionState.CONNECTED) {
-            state = ConnectionState.DISCONNECTING;
-            sendCommand("QUIT");
-        } else {
+         if (state != ConnectionState.DISCONNECTED) {
             state = ConnectionState.DISCONNECTED;
-        }
 
-        this.webSocket.close();
+            if(this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
+        }
     }
 
     @Override
     public void reconnect() {
-        state = ConnectionState.RECONNECTING;
-        disconnect();
-        loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, 2, TimeUnit.SECONDS);
+        if (state != ConnectionState.RECONNECTING) {
+            state = ConnectionState.RECONNECTING;
+            if (this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
+            loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, settings.reconnectDelay(), TimeUnit.MILLISECONDS);
+        }
     }
 
     @Override
@@ -326,8 +332,6 @@ public class DefaultTwitchMi implements TwitchMi {
         public void onOpen(WebSocket webSocket) {
             DefaultTwitchMi.this.webSocket = webSocket;
 
-            logger.debug("Connecting to Twitch IRC {} ...", webSocket.getUri());
-
             sendRawCommand("CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership");
             sendRawCommand("CAP END");
 
@@ -343,7 +347,7 @@ public class DefaultTwitchMi implements TwitchMi {
 
         @Override
         public void onClose(WebSocket webSocket, int code, String reason, boolean remote) {
-            if (state != ConnectionState.DISCONNECTING) {
+            if (state != ConnectionState.DISCONNECTING && state != ConnectionState.RECONNECTING) {
                 logger.info("Connection to Twitch IRC lost: {} {}. Retrying ...", code, reason);
 
                 reconnect();
@@ -360,7 +364,7 @@ public class DefaultTwitchMi implements TwitchMi {
 
         @Override
         public void onStart() {
-            logger.info("Web socket client started");
+            logger.debug("Web socket client started");
         }
 
         @Override

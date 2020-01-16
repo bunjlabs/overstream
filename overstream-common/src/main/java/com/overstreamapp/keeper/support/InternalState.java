@@ -65,7 +65,7 @@ class InternalState<T extends StateObject> implements State<T> {
 
         if (ps == StatePersistenceStrategy.LIST_CAPPED || ps == StatePersistenceStrategy.LIST_LIMITED) {
             if (this.collection != null && this.info.getSize() > 0) {
-                var stateObjects = collection.find().sort(Sorts.descending("_id")).limit(info.getSize());
+                var stateObjects = collection.find().sort(Sorts.ascending("_id")).limit(info.getSize());
 
                 if (stateObjects == null) return Collections.emptyList();
 

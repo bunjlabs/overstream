@@ -62,29 +62,37 @@ public class YmpdClient {
 
     public void connect() {
         if (state == ConnectionState.DISCONNECTED || state == ConnectionState.RECONNECTING) {
+            logger.info("Connecting to YMPD {} ...", settings.serverUri());
 
             this.state = ConnectionState.CONNECTING;
 
-            this.webSocketClient.connect(URI.create(settings.serverUri()), webSocketHandler);
+            this.webSocketClient.connect(URI.create(settings.serverUri()), webSocketHandler, settings.connectTimeout());
         }
     }
 
     public void disconnect() {
         if (state != ConnectionState.DISCONNECTED) {
             state = ConnectionState.DISCONNECTING;
-            this.webSocket.close();
-            this.webSocket = null;
+            if(this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
         }
     }
 
     public void reconnect() {
-        state = ConnectionState.RECONNECTING;
-        disconnect();
-        loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, 2, TimeUnit.SECONDS);
+        if (state != ConnectionState.RECONNECTING) {
+            state = ConnectionState.RECONNECTING;
+            if (this.webSocket != null) {
+                this.webSocket.close();
+                this.webSocket = null;
+            }
+            loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect,  settings.reconnectDelay(), TimeUnit.MILLISECONDS);
+        }
     }
 
     private void onData(String type, JsonNode data) {
-        logger.debug("Received message: {}", data);
+        logger.debug("Received message: {}", type);
 
         if ("song_change".equals(type)) {
             SongState song = new SongState(
@@ -118,24 +126,33 @@ public class YmpdClient {
         public void onOpen(WebSocket socket) {
             YmpdClient.this.webSocket = socket;
             state = ConnectionState.CONNECTED;
-            logger.info("Connected to {}", settings.serverUri());
+            logger.info("Connected to YMPD {}", settings.serverUri());
         }
 
         @Override
         public void onClose(WebSocket socket, int code, String reason, boolean remote) {
-            state = ConnectionState.DISCONNECTED;
-            logger.info("Disconnected from {}", settings.serverUri());
+            if (state != ConnectionState.DISCONNECTING && state != ConnectionState.RECONNECTING) {
+                logger.info("Connection to YMPD lost: {} {}. Retrying ...", code, reason);
+
+                reconnect();
+            } else {
+                state = ConnectionState.DISCONNECTED;
+                logger.info("Disconnected from YMPD: {} {}", code, reason);
+            }
         }
 
         @Override
         public void onMessage(WebSocket socket, String message) {
-            logger.trace("Received message: {}", message);
+            logger.trace("Received raw message: {}", message);
 
             try {
                 JsonNode root = mapper.readTree(message);
 
                 if (root != null && root.isObject() && root.has("type") && root.has("data")) {
-                    onData(root.get("type").asText(""), root.get("data"));
+                    var type = root.get("type").asText("");
+                    var data = root.get("data");
+
+                    onData(type, data);
                 }
             } catch (Exception e) {
                 logger.error("Error parsing message", e);

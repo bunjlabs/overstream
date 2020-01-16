@@ -29,10 +29,9 @@ import java.nio.ByteOrder;
 class X32OscHandler implements OscHandler {
 
     private final X32Mixer mixer;
-    private final X32MixerState state;
+    private long lastMessageTime = 0;
 
     X32OscHandler(X32Mixer mixer) {
-        state = new X32MixerState();
         this.mixer = mixer;
     }
 
@@ -41,6 +40,8 @@ class X32OscHandler implements OscHandler {
         if (message.getAddress().isEmpty() || message.getArguments().isEmpty()) {
             return;
         }
+
+        lastMessageTime = System.currentTimeMillis();
 
         String address = message.getAddress();
 
@@ -69,4 +70,7 @@ class X32OscHandler implements OscHandler {
     public void onBundle(OscChannel channel, OscBundle bundle) {
     }
 
+    public long getLastMessageTime() {
+        return lastMessageTime;
+    }
 }

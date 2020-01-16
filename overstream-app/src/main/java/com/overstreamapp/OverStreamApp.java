@@ -24,38 +24,35 @@ import com.bunjlabs.fuga.inject.Configuration;
 import com.bunjlabs.fuga.inject.Inject;
 import com.bunjlabs.fuga.inject.Injector;
 import com.bunjlabs.fuga.inject.Unit;
+import com.mongodb.client.MongoDatabase;
+import com.overstreamapp.groovy.GroovyRuntime;
 import com.overstreamapp.groovy.GroovyScripts;
 import com.overstreamapp.groovy.GroovyUnit;
-import com.overstreamapp.messageserver.MessageServer;
-import com.overstreamapp.messageserver.MessageServerUnit;
-import com.overstreamapp.mongodb.MongoUnit;
-import com.overstreamapp.twitchbot.DefaultTwitchBot;
-import com.overstreamapp.twitchmi.DefaultTwitchMi;
-import com.overstreamapp.ympd.YmpdClient;
-import com.overstreamapp.ympd.YmpdClientUnit;
-import com.overstreamapp.network.EventLoopGroupManagerUnit;
-import com.overstreamapp.obs.ObsClient;
-import com.overstreamapp.obs.ObsUnit;
-import com.overstreamapp.osc.NettyOscClientUnit;
+import com.overstreamapp.keeper.Keeper;
 import com.overstreamapp.keeper.KeeperUnit;
-import com.overstreamapp.streamlabs.StreamlabsClient;
-import com.overstreamapp.streamlabs.StreamlabsUnit;
-import com.overstreamapp.twitchmi.TwitchMiUnit;
-import com.overstreamapp.twitchbot.TwitchBotUnit;
+import com.overstreamapp.messageserver.MessageServerAppModule;
+import com.overstreamapp.mongodb.MongoUnit;
+import com.overstreamapp.network.EventLoopGroupManagerUnit;
+import com.overstreamapp.obs.ObsAppModule;
+import com.overstreamapp.osc.NettyOscClientUnit;
+import com.overstreamapp.streamlabs.StreamlabsAppModule;
+import com.overstreamapp.twitchbot.TwitchBotAppModule;
 import com.overstreamapp.websocket.client.netty.NettyWebSocketClientUnit;
 import com.overstreamapp.websocket.server.NettyWebSocketServerUnit;
-import com.overstreamapp.x32mixer.X32MixerClient;
-import com.overstreamapp.x32mixer.X32MixerClientUnit;
+import com.overstreamapp.x32mixer.X32MixerAppModule;
+import com.overstreamapp.ympd.YmpdAppModule;
 import org.slf4j.Logger;
 
 import java.util.ArrayList;
-import java.util.function.Consumer;
+import java.util.List;
 
 public class OverStreamApp {
 
     private final Logger logger;
     private final AppSettings settings;
     private final Injector baseInjector;
+    private final ApplicationContext context;
+    private final List<Class<? extends AppModule>> appModules;
     private Injector appInjector;
 
     @Inject
@@ -63,6 +60,16 @@ public class OverStreamApp {
         this.logger = logger;
         this.settings = settings;
         this.baseInjector = context.getInjector();
+        this.context = context;
+
+        this.appModules = List.of(
+                MessageServerAppModule.class,
+                ObsAppModule.class,
+                StreamlabsAppModule.class,
+                TwitchBotAppModule.class,
+                X32MixerAppModule.class,
+                YmpdAppModule.class
+        );
     }
 
     public Injector getInjector() {
@@ -72,82 +79,56 @@ public class OverStreamApp {
     void start() {
         logger.info("Starting up OverStream");
 
-        var modules = new ArrayList<AppModule>();
-        modules.add(new AppModule(settings.modulesEnabled().messageServer(), new MessageServerUnit(), (injector -> {
-            logger.info("Enabling MessageServer");
-            injector.getInstance(MessageServer.class).start();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().x32MixerClient(), new X32MixerClientUnit(), (injector -> {
-            logger.info("Enabling X32MixerClient");
-            injector.getInstance(X32MixerClient.class).connect();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().mpdClient(), new YmpdClientUnit(), (injector -> {
-            logger.info("Enabling YmpdClient");
-            injector.getInstance(YmpdClient.class).connect();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().twitchMiClient(), new TwitchMiUnit(), (injector -> {
-            logger.info("Enabling TwitchMi");
-            injector.getInstance(DefaultTwitchMi.class).connect();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().twitchBot(), new TwitchBotUnit(), (injector -> {
-            logger.info("Enabling TwitchBot");
-            injector.getInstance(DefaultTwitchBot.class).start();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().streamlabsSocket(), new StreamlabsUnit(), (injector -> {
-            logger.info("Enabling StreamlabsClient");
-            injector.getInstance(StreamlabsClient.class).connect();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().obsClient(), new ObsUnit(), (injector -> {
-            logger.info("Enabling ObsClient");
-            injector.getInstance(ObsClient.class).connect();
-        })));
-        modules.add(new AppModule(settings.modulesEnabled().groovy(), new GroovyUnit(), (injector -> {
-            logger.info("Enabling GroovyScripts");
-            injector.getInstance(GroovyScripts.class).start();
-        })));
+        var baseUnits = new ArrayList<Unit>();
+        baseUnits.add(this::configureCommons);
+        baseUnits.add(this::configureProto);
+        baseUnits.add(this::configureModules);
+        baseUnits.add(this::configureApp);
 
-        var units = new ArrayList<Unit>();
-        units.add(this::configure);
-        modules.forEach(m -> {
-            if (m.enabled) units.add(m.unit);
-        });
+        var commonInjector = baseInjector.createChildInjector(baseUnits);
 
-        this.appInjector  = baseInjector.createChildInjector(units);
+        var appUnits = new ArrayList<Unit>();
+        this.appModules.forEach(module -> appUnits.addAll(commonInjector.getInstance(module).getUnits()));
+        this.appInjector = commonInjector.createChildInjector(appUnits);
+        this.appModules.forEach(module -> appInjector.getInstance(module).init(appInjector));
 
-        modules.forEach(m -> {
-            if (m.enabled) m.initializer.accept(appInjector);
-        });
+        var groovy = appInjector.getInstance(GroovyRuntime.class);
+        groovy.export("Keeper", appInjector.getInstance(Keeper.class));
+        groovy.export("MongoDatabase", appInjector.getInstance(MongoDatabase.class));
 
         var eventManager = appInjector.getInstance(ApplicationEventManager.class);
-        eventManager.addEventListener(new ApplicationListener<ContextClosedEvent>() {
-            @Override
-            public void onApplicationEvent(ContextClosedEvent  contextClosedEvent) {
-                logger.info("Shutdown application...");
-            }
+        eventManager.addEventListener((ApplicationListener<ContextClosedEvent>) contextClosedEvent -> {
+            logger.info("Shutdown application...");
         });
+
+        appInjector.getInstance(GroovyScripts.class).start();
 
         logger.info("Started");
     }
 
-    private void configure(Configuration c) {
+    private void configureCommons(Configuration c) {
+        c.install(new MongoUnit());
         c.install(new KeeperUnit());
+        c.install(new GroovyUnit());
         c.install(new EventLoopGroupManagerUnit());
+    }
+
+    private void configureProto(Configuration c) {
         c.install(new NettyWebSocketServerUnit());
         c.install(new NettyWebSocketClientUnit());
         c.install(new NettyOscClientUnit());
-        c.install(new MongoUnit());
-        c.bind(OverStreamApp.class).toInstance(this);
     }
 
-    private static class AppModule {
-        final boolean enabled;
-        final Unit unit;
-        final Consumer<Injector> initializer;
+    private void configureModules(Configuration c) {
+        c.bind(MessageServerAppModule.class).auto();
+        c.bind(ObsAppModule.class).auto();
+        c.bind(StreamlabsAppModule.class).auto();
+        c.bind(TwitchBotAppModule.class).auto();
+        c.bind(X32MixerAppModule.class).auto();
+        c.bind(YmpdAppModule.class).auto();
+    }
 
-        public AppModule(boolean enabled, Unit unit, Consumer<Injector> initializer) {
-            this.enabled = enabled;
-            this.unit = unit;
-            this.initializer = initializer;
-        }
+    private void configureApp(Configuration c) {
+        c.bind(OverStreamApp.class).toInstance(this);
     }
 }
