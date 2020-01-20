@@ -16,9 +16,7 @@
 
 package com.overstreamapp.streamlabs.events;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class TwitchResub implements EventObject {
+public class TwitchResub {
     public String name;
     public int months;
     public int streak_months;

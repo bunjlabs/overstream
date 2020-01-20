@@ -22,6 +22,7 @@ jar {
 
 dependencies {
     implementation project(":overstream-common")
+    implementation project(":overstream-http")
     implementation project(":overstream-websocket-client")
     implementation project(":overstream-websocket-server")
     implementation project(":overstream-osc")

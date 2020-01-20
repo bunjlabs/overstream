@@ -16,9 +16,7 @@
 
 package com.overstreamapp.streamlabs.events;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class TwitchHost implements EventObject {
+public class TwitchHost {
     public String name;
     public int viewers;
     public String type;

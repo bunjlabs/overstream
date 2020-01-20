@@ -5,5 +5,4 @@ plugins {
 dependencies {
     implementation project(":overstream-common")
     implementation project(":overstream-websocket-server")
-    implementation 'com.google.code.gson:gson:2.8.5'
 }

@@ -5,5 +5,4 @@ plugins {
 dependencies {
     implementation project(":overstream-common")
     implementation project(":overstream-websocket-client")
-    implementation 'com.fasterxml.jackson.core:jackson-databind:2.9.9.3'
 }

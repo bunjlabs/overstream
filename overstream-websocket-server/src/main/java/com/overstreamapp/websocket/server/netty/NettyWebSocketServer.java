@@ -19,6 +19,7 @@ package com.overstreamapp.websocket.server.netty;
 import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.websocket.WebSocketHandler;
+import com.overstreamapp.websocket.server.WebSocketHandlerFactory;
 import com.overstreamapp.websocket.server.WebSocketServer;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.EventLoopGroup;
@@ -39,14 +40,14 @@ public class NettyWebSocketServer implements WebSocketServer {
     }
 
     @Override
-    public void start(SocketAddress socketAddress, WebSocketHandler handler) {
+    public void start(SocketAddress socketAddress, WebSocketHandlerFactory handlerFactory) {
         EventLoopGroup bossGroup = loopGroupManager.getBossEventLoopGroup();
         EventLoopGroup workerGroup = loopGroupManager.getWorkerEventLoopGroup();
 
         ServerBootstrap b = new ServerBootstrap();
         b.group(bossGroup, workerGroup)
                 .channel(NioServerSocketChannel.class)
-                .childHandler(new NettyWebSocketServerInitializer(handler));
+                .childHandler(new NettyWebSocketServerInitializer(handlerFactory));
 
         try {
             b.bind(socketAddress).sync();

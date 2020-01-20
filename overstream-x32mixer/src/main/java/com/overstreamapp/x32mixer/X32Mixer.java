@@ -36,16 +36,20 @@ class X32Mixer {
     private final Map<String, X32Subscription<OscType>> subscriptions;
     private final List<X32Meter> meters;
 
+    private final EventLoopGroupManager eventLoopGroupManager;
     private final OscChannel oscChannel;
 
     X32Mixer(Logger logger, EventLoopGroupManager eventLoopGroupManager, OscChannel oscChannel) {
         this.logger = logger;
+        this.eventLoopGroupManager = eventLoopGroupManager;
         this.oscChannel = oscChannel;
 
         this.x32OscHandler = new X32OscHandler(this);
         this.subscriptions = new ConcurrentHashMap<>();
         this.meters = new CopyOnWriteArrayList<>();
+    }
 
+    void start() {
         eventLoopGroupManager.getWorkerEventLoopGroup().scheduleAtFixedRate(
                 this::onTimer, 5, 5, TimeUnit.SECONDS);
     }

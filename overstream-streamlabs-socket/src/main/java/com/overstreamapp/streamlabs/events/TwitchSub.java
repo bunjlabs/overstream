@@ -16,9 +16,7 @@
 
 package com.overstreamapp.streamlabs.events;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class TwitchSub implements EventObject {
+public class TwitchSub {
     public String name;
     public int months;
     public String message;

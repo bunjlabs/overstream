@@ -22,6 +22,6 @@ import java.net.SocketAddress;
 
 public interface WebSocketServer {
 
-    void start(SocketAddress socketAddress, WebSocketHandler handler);
+    void start(SocketAddress socketAddress, WebSocketHandlerFactory handlerFactory);
 
 }

@@ -16,8 +16,16 @@
 
 package com.overstreamapp.obs.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
+@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ObsGetStatsRequest extends ObsRequest {
-    public ObsGetStatsRequest() {
-        super("GetStats");
+    public ObsGetStatsRequest(String messageId) {
+        super(messageId);
     }
 }

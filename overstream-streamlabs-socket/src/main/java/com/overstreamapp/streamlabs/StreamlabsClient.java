@@ -19,8 +19,9 @@ package com.overstreamapp.streamlabs;
 import com.bunjlabs.fuga.inject.Inject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.overstreamapp.event.Event;
+import com.overstreamapp.event.EventKeeper;
 import com.overstreamapp.network.EventLoopGroupManager;
-import com.overstreamapp.keeper.*;
 import com.overstreamapp.streamlabs.events.*;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
@@ -53,7 +54,7 @@ public class StreamlabsClient {
     private ConnectionState state = ConnectionState.DISCONNECTED;
 
     @Inject
-    public StreamlabsClient(Logger logger, StreamlabsSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, Keeper keeper) {
+    public StreamlabsClient(Logger logger, StreamlabsSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, EventKeeper eventKeeper) {
         this.logger = logger;
         this.settings = settings;
         this.webSocketClient = webSocketClient;
@@ -61,12 +62,12 @@ public class StreamlabsClient {
         this.webSocketHandler = new Handler();
         this.objectMapper = new ObjectMapper();
 
-        this.twitchSubEvent = keeper.eventBuilder(TwitchSub.class).build();
-        this.twitchResubEvent = keeper.eventBuilder(TwitchResub.class).build();
-        this.twitchFollowEvent = keeper.eventBuilder(TwitchFollow.class).build();
-        this.twitchHostEvent = keeper.eventBuilder(TwitchHost.class).build();
-        this.twitchBitsEvent = keeper.eventBuilder(TwitchBits.class).build();
-        this.twitchRaidEvent = keeper.eventBuilder(TwitchRaid.class).build();
+        this.twitchSubEvent = eventKeeper.eventBuilder(TwitchSub.class).build();
+        this.twitchResubEvent = eventKeeper.eventBuilder(TwitchResub.class).build();
+        this.twitchFollowEvent = eventKeeper.eventBuilder(TwitchFollow.class).build();
+        this.twitchHostEvent = eventKeeper.eventBuilder(TwitchHost.class).build();
+        this.twitchBitsEvent = eventKeeper.eventBuilder(TwitchBits.class).build();
+        this.twitchRaidEvent = eventKeeper.eventBuilder(TwitchRaid.class).build();
     }
 
     public void connect() {
@@ -81,22 +82,29 @@ public class StreamlabsClient {
 
     public void disconnect() {
         if (state != ConnectionState.DISCONNECTED) {
-            state = ConnectionState.DISCONNECTED;
+            state = ConnectionState.DISCONNECTING;
             if (this.pingScheduledFuture != null) {
                 this.pingScheduledFuture.cancel(false);
                 this.pingScheduledFuture.awaitUninterruptibly(1000);
+                this.pingScheduledFuture = null;
             }
 
             if(this.webSocket != null) {
                 this.webSocket.close();
                 this.webSocket = null;
             }
+            state = ConnectionState.DISCONNECTED;
         }
     }
 
     public void reconnect() {
         if (state != ConnectionState.RECONNECTING) {
             state = ConnectionState.RECONNECTING;
+            if (this.pingScheduledFuture != null) {
+                this.pingScheduledFuture.cancel(false);
+                this.pingScheduledFuture.awaitUninterruptibly(1000);
+            }
+
             if (this.webSocket != null) {
                 this.webSocket.close();
                 this.webSocket = null;
@@ -198,18 +206,18 @@ public class StreamlabsClient {
         public void onOpen(WebSocket socket) {
             StreamlabsClient.this.webSocket = socket;
             StreamlabsClient.this.state = ConnectionState.CONNECTING;
-            logger.info("Connected to Streamlabs Socket API");
+            logger.info("Connected established");
         }
 
         @Override
         public void onClose(WebSocket socket, int code, String reason, boolean remote) {
             if (state != ConnectionState.DISCONNECTING && state != ConnectionState.RECONNECTING) {
-                logger.info("Connection to Streamlabs Socket API lost: {} {}. Retrying ...", code, reason);
+                logger.info("Connection lost: {} {}. Retrying ...", code, reason);
 
                 reconnect();
             } else {
                 state = ConnectionState.DISCONNECTED;
-                logger.info("Disconnected from Streamlabs Socket API: {} {}", code, reason);
+                logger.info("Disconnected: {} {}", code, reason);
             }
         }
 

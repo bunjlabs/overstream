@@ -17,33 +17,35 @@
 package com.overstreamapp.twitchbot;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.keeper.Keeper;
-import com.overstreamapp.keeper.State;
-import com.overstreamapp.twitchbot.state.TwitchChatState;
+import com.overstreamapp.store.Store;
+import com.overstreamapp.store.StoreKeeper;
+import com.overstreamapp.store.ValueAction;
+import com.overstreamapp.twitchbot.state.TwitchChat;
 import com.overstreamapp.twitchmi.ChatMessage;
 import com.overstreamapp.twitchmi.TwitchMi;
 import com.overstreamapp.util.ArrayUtils;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class DefaultTwitchBot implements TwitchBot {
     private Logger logger;
     private final TwitchBotSettings settings;
     private final TwitchMi twitchMi;
-    private final State<TwitchChatState> twitchChatState;
+    private final Store<TwitchChat> twitchChatState;
 
     private final List<CommandsHandler> commandsHandlers = new CopyOnWriteArrayList<>();
     private final List<ChatListener> chatListeners = new CopyOnWriteArrayList<>();
 
     @Inject
-    public DefaultTwitchBot(Logger logger, TwitchBotSettings settings, TwitchMi twitchMi, Keeper keeper) {
+    public DefaultTwitchBot(Logger logger, TwitchBotSettings settings, TwitchMi twitchMi, StoreKeeper storeKeeper) {
         this.logger = logger;
         this.settings = settings;
         this.twitchMi = twitchMi;
-        this.twitchChatState = keeper.stateBuilder(TwitchChatState.class)
-                .persistenceListCapped().history(settings.chatHistory()).build();
+        this.twitchChatState = storeKeeper.storeBuilder(TwitchChat.class).persistence(settings.chatHistory()).build();
     }
 
     @Override
@@ -131,7 +133,7 @@ public class DefaultTwitchBot implements TwitchBot {
                 message.getUserName(),
                 message.getText());
 
-        twitchChatState.push(new TwitchChatState(message));
+        twitchChatState.dispatch(new ValueAction(new TwitchChat(message)));
         chatListeners.forEach(l -> l.onChat(message));
     }
 

@@ -19,14 +19,15 @@ package com.overstreamapp.ympd;
 import com.bunjlabs.fuga.inject.Inject;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.overstreamapp.keeper.Keeper;
-import com.overstreamapp.keeper.State;
 import com.overstreamapp.network.EventLoopGroupManager;
+import com.overstreamapp.store.Store;
+import com.overstreamapp.store.StoreKeeper;
+import com.overstreamapp.store.ValueAction;
 import com.overstreamapp.websocket.WebSocket;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
+import com.overstreamapp.ympd.state.PlayerSong;
 import com.overstreamapp.ympd.state.PlayerState;
-import com.overstreamapp.ympd.state.SongState;
 import org.slf4j.Logger;
 
 import java.net.URI;
@@ -41,14 +42,14 @@ public class YmpdClient {
     private final EventLoopGroupManager loopGroupManager;
     private final Handler webSocketHandler;
     private final ObjectMapper mapper;
-    private final State<SongState> songState;
-    private final State<PlayerState> playerState;
+    private final Store<PlayerSong> songStore;
+    private final Store<PlayerState> stateStore;
 
     private ConnectionState state = ConnectionState.DISCONNECTED;
     private WebSocket webSocket;
 
     @Inject
-    public YmpdClient(Logger logger, YmpdClientSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, Keeper keeper) {
+    public YmpdClient(Logger logger, YmpdClientSettings settings, WebSocketClient webSocketClient, EventLoopGroupManager loopGroupManager, StoreKeeper storeKeeper) {
         this.logger = logger;
         this.settings = settings;
         this.webSocketClient = webSocketClient;
@@ -56,8 +57,8 @@ public class YmpdClient {
         this.webSocketHandler = new Handler();
         this.mapper = new ObjectMapper();
 
-        this.songState = keeper.stateBuilder(SongState.class).persistenceListCapped().history(settings.historySize()).build();
-        this.playerState = keeper.stateBuilder(PlayerState.class).persistenceTransient().build();
+        this.songStore = storeKeeper.storeBuilder(PlayerSong.class).persistence(settings.historySize()).build();
+        this.stateStore = storeKeeper.storeBuilder(PlayerState.class).build();
     }
 
     public void connect() {
@@ -73,7 +74,7 @@ public class YmpdClient {
     public void disconnect() {
         if (state != ConnectionState.DISCONNECTED) {
             state = ConnectionState.DISCONNECTING;
-            if(this.webSocket != null) {
+            if (this.webSocket != null) {
                 this.webSocket.close();
                 this.webSocket = null;
             }
@@ -87,7 +88,7 @@ public class YmpdClient {
                 this.webSocket.close();
                 this.webSocket = null;
             }
-            loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect,  settings.reconnectDelay(), TimeUnit.MILLISECONDS);
+            loopGroupManager.getWorkerEventLoopGroup().schedule(this::connect, settings.reconnectDelay(), TimeUnit.MILLISECONDS);
         }
     }
 
@@ -95,20 +96,20 @@ public class YmpdClient {
         logger.debug("Received message: {}", type);
 
         if ("song_change".equals(type)) {
-            SongState song = new SongState(
+            var song = new PlayerSong(
                     data.get("pos").asInt(0),
                     data.get("title").asText(""),
                     data.get("artist").asText(""),
-                    data.get("album").asText("")
-            );
+                    data.get("album").asText(""));
 
-            this.songState.push(song);
+            this.songStore.dispatch(new ValueAction(song));
         } else if ("state".equals(type)) {
-            this.playerState.push(new PlayerState(
+            var state = new PlayerState(
                     data.get("state").asInt(0),
                     data.get("totalTime").asInt(0),
-                    data.get("elapsedTime").asInt(0)
-            ));
+                    data.get("elapsedTime").asInt(0));
+
+            this.stateStore.dispatch(new ValueAction(state));
         }
     }
 

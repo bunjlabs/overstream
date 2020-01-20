@@ -16,9 +16,7 @@
 
 package com.overstreamapp.streamlabs.events;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class TwitchRaid implements EventObject {
+public class TwitchRaid {
     public String name;
     public int raiders;
 

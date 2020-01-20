@@ -25,18 +25,27 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.bunjlabs.fuga.inject.Injector;
 import com.bunjlabs.fuga.inject.Unit;
 import com.mongodb.client.MongoDatabase;
+import com.overstreamapp.commands.CommandRegistry;
+import com.overstreamapp.commands.CommandRegistryUnit;
+import com.overstreamapp.commandserver.CommandServerAppModule;
+import com.overstreamapp.common.CommonUnit;
+import com.overstreamapp.event.EventKeeper;
+import com.overstreamapp.event.EventKeeperUnit;
 import com.overstreamapp.groovy.GroovyRuntime;
 import com.overstreamapp.groovy.GroovyScripts;
 import com.overstreamapp.groovy.GroovyUnit;
-import com.overstreamapp.keeper.Keeper;
-import com.overstreamapp.keeper.KeeperUnit;
+import com.overstreamapp.http.HttpClientUnit;
 import com.overstreamapp.messageserver.MessageServerAppModule;
 import com.overstreamapp.mongodb.MongoUnit;
+import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.network.EventLoopGroupManagerUnit;
 import com.overstreamapp.obs.ObsAppModule;
 import com.overstreamapp.osc.NettyOscClientUnit;
+import com.overstreamapp.store.StoreKeeper;
+import com.overstreamapp.store.StoreKeeperUnit;
 import com.overstreamapp.streamlabs.StreamlabsAppModule;
 import com.overstreamapp.twitchbot.TwitchBotAppModule;
+import com.overstreamapp.twitchpubsub.TwitchPubSubAppModule;
 import com.overstreamapp.websocket.client.netty.NettyWebSocketClientUnit;
 import com.overstreamapp.websocket.server.NettyWebSocketServerUnit;
 import com.overstreamapp.x32mixer.X32MixerAppModule;
@@ -64,9 +73,11 @@ public class OverStreamApp {
 
         this.appModules = List.of(
                 MessageServerAppModule.class,
+                CommandServerAppModule.class,
                 ObsAppModule.class,
                 StreamlabsAppModule.class,
                 TwitchBotAppModule.class,
+                TwitchPubSubAppModule.class,
                 X32MixerAppModule.class,
                 YmpdAppModule.class
         );
@@ -93,39 +104,53 @@ public class OverStreamApp {
         this.appModules.forEach(module -> appInjector.getInstance(module).init(appInjector));
 
         var groovy = appInjector.getInstance(GroovyRuntime.class);
-        groovy.export("Keeper", appInjector.getInstance(Keeper.class));
+        groovy.export("EventKeeper", appInjector.getInstance(EventKeeper.class));
+        groovy.export("StoreKeeper", appInjector.getInstance(StoreKeeper.class));
         groovy.export("MongoDatabase", appInjector.getInstance(MongoDatabase.class));
+        groovy.export("Commands", appInjector.getInstance(CommandRegistry.class));
 
         var eventManager = appInjector.getInstance(ApplicationEventManager.class);
         eventManager.addEventListener((ApplicationListener<ContextClosedEvent>) contextClosedEvent -> {
             logger.info("Shutdown application...");
+
+            appInjector.getInstance(EventLoopGroupManager.class).shutdownGracefully();
         });
 
         appInjector.getInstance(GroovyScripts.class).start();
+
+        /*
+        var client = appInjector.getInstance(HttpClient.class);
+
+        try {
+            client.get("http://google.com/").execute();
+        } catch (MalformedURLException e) {
+            logger.error("URL error", e);
+        }
+
+        */
 
         logger.info("Started");
     }
 
     private void configureCommons(Configuration c) {
+        c.install(new CommonUnit());
         c.install(new MongoUnit());
-        c.install(new KeeperUnit());
+        c.install(new StoreKeeperUnit());
+        c.install(new EventKeeperUnit());
         c.install(new GroovyUnit());
+        c.install(new CommandRegistryUnit());
         c.install(new EventLoopGroupManagerUnit());
     }
 
     private void configureProto(Configuration c) {
+        c.install(new HttpClientUnit());
         c.install(new NettyWebSocketServerUnit());
         c.install(new NettyWebSocketClientUnit());
         c.install(new NettyOscClientUnit());
     }
 
     private void configureModules(Configuration c) {
-        c.bind(MessageServerAppModule.class).auto();
-        c.bind(ObsAppModule.class).auto();
-        c.bind(StreamlabsAppModule.class).auto();
-        c.bind(TwitchBotAppModule.class).auto();
-        c.bind(X32MixerAppModule.class).auto();
-        c.bind(YmpdAppModule.class).auto();
+        this.appModules.forEach(module -> c.bind(module).auto());
     }
 
     private void configureApp(Configuration c) {

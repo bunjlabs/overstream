@@ -16,9 +16,7 @@
 
 package com.overstreamapp.streamlabs.events;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class TwitchFollow implements EventObject {
+public class TwitchFollow {
     public String name;
     public String createdAt;
 

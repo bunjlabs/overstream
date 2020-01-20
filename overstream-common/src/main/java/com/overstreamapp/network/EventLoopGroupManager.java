@@ -28,4 +28,5 @@ public interface EventLoopGroupManager {
 
     EventLoopGroup getWorkerEventLoopGroup();
 
+    void shutdownGracefully();
 }

@@ -16,25 +16,30 @@
 
 package com.overstreamapp.obs.request;
 
-import com.google.gson.annotations.SerializedName;
 
-import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "request-type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = ObsGetStatsRequest.class, name = "GetStats"),
+        @JsonSubTypes.Type(value = ObsSetHeartbeatRequest.class, name = "SetHeartbeat")
+})
 public abstract class ObsRequest {
 
-    @SerializedName("request-type")
-    private String requestType;
-
-    @SerializedName("message-id")
     private String messageId;
 
-    public ObsRequest(String requestType) {
-        this.requestType = requestType;
-        this.messageId = requestType + "-" + UUID.randomUUID().toString();
-    }
-
-    public String getRequestType() {
-        return requestType;
+    public ObsRequest(String messageId) {
+        this.messageId = messageId;
     }
 
     public String getMessageId() {

@@ -16,11 +16,23 @@
 
 package com.overstreamapp.obs.request;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
+
+@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ObsSetHeartbeatRequest extends ObsRequest {
     private boolean enable;
 
-    public ObsSetHeartbeatRequest(boolean enable) {
-        super("SetHeartbeat");
+    public ObsSetHeartbeatRequest(String messageId, boolean enable) {
+        super(messageId);
         this.enable = enable;
+    }
+
+    public boolean isEnable() {
+        return enable;
     }
 }

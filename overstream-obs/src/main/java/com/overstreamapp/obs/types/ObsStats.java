@@ -16,38 +16,24 @@
 
 package com.overstreamapp.obs.types;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ObsStats {
-    @SerializedName("fps")
     private double fps;
-
-    @SerializedName("render-total-frames")
     private int renderTotalFrames;
-
-    @SerializedName("render-missed-frames")
     private int renderMissedFrames;
-
-    @SerializedName("output-total-frames")
     private int outputTotalFrames;
-
-    @SerializedName("output-skipped-frames")
     private int outputSkippedFrames;
-
-    @SerializedName("average-frame-time")
     private double averageFrameTime;
-
-    @SerializedName("cpu-usage")
     private double cpuUsage;
-
-    @SerializedName("memory-usage")
     private double memoryUsage;
-
-    @SerializedName("free-disk-space")
     private double freeDiskSpace;
-
-    public ObsStats() {
-    }
 
     public double getFps() {
         return fps;
@@ -83,41 +69,5 @@ public class ObsStats {
 
     public double getFreeDiskSpace() {
         return freeDiskSpace;
-    }
-
-    public void setFps(double fps) {
-        this.fps = fps;
-    }
-
-    public void setRenderTotalFrames(int renderTotalFrames) {
-        this.renderTotalFrames = renderTotalFrames;
-    }
-
-    public void setRenderMissedFrames(int renderMissedFrames) {
-        this.renderMissedFrames = renderMissedFrames;
-    }
-
-    public void setOutputTotalFrames(int outputTotalFrames) {
-        this.outputTotalFrames = outputTotalFrames;
-    }
-
-    public void setOutputSkippedFrames(int outputSkippedFrames) {
-        this.outputSkippedFrames = outputSkippedFrames;
-    }
-
-    public void setAverageFrameTime(double averageFrameTime) {
-        this.averageFrameTime = averageFrameTime;
-    }
-
-    public void setCpuUsage(double cpuUsage) {
-        this.cpuUsage = cpuUsage;
-    }
-
-    public void setMemoryUsage(double memoryUsage) {
-        this.memoryUsage = memoryUsage;
-    }
-
-    public void setFreeDiskSpace(double freeDiskSpace) {
-        this.freeDiskSpace = freeDiskSpace;
     }
 }

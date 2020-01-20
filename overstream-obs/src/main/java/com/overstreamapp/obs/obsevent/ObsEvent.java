@@ -16,22 +16,27 @@
 
 package com.overstreamapp.obs.obsevent;
 
-import com.google.gson.annotations.SerializedName;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.PropertyNamingStrategy;
+import com.fasterxml.jackson.databind.annotation.JsonNaming;
 
+@JsonNaming(PropertyNamingStrategy.KebabCaseStrategy.class)
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        property = "update-type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = ObsHeartbeat.class, name = "Heartbeat"),
+        @JsonSubTypes.Type(value = ObsStreamStatus.class, name = "StreamStatus")
+})
 public abstract class ObsEvent {
 
-    @SerializedName("update-type")
-    private String updateType;
-
-    @SerializedName("stream-timecode")
     private String streamTimecode;
-
-    @SerializedName("rec-timecode")
     private String recTimecode;
-
-    public String getUpdateType() {
-        return updateType;
-    }
 
     public String getStreamTimecode() {
         return streamTimecode;
@@ -40,4 +45,8 @@ public abstract class ObsEvent {
     public String getRecTimecode() {
         return recTimecode;
     }
+
+
+
+
 }

@@ -16,9 +16,7 @@
 
 package com.overstreamapp.streamlabs.events;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class TwitchBits implements EventObject {
+public class TwitchBits {
     public String name;
     public int amount;
     public String message;

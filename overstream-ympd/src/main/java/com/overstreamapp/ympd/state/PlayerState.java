@@ -16,9 +16,9 @@
 
 package com.overstreamapp.ympd.state;
 
-import com.overstreamapp.keeper.StateObject;
+import java.util.Objects;
 
-public class PlayerState implements StateObject {
+public class PlayerState {
     private int state;
     private int totalTime;
     private int elapsedTime;
@@ -54,5 +54,20 @@ public class PlayerState implements StateObject {
 
     public void setElapsedTime(int elapsedTime) {
         this.elapsedTime = elapsedTime;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        PlayerState that = (PlayerState) o;
+        return state == that.state &&
+                totalTime == that.totalTime &&
+                elapsedTime == that.elapsedTime;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(state, totalTime, elapsedTime);
     }
 }

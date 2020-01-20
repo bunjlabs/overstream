@@ -16,9 +16,7 @@
 
 package com.overstreamapp.messageserver.event;
 
-import com.overstreamapp.keeper.EventObject;
-
-public class NewConnectionEvent implements EventObject {
+public class NewConnectionEvent {
     private String host;
 
     public NewConnectionEvent() {
@@ -26,5 +24,9 @@ public class NewConnectionEvent implements EventObject {
 
     public NewConnectionEvent(String host) {
         this.host = host;
+    }
+
+    public String getHost() {
+        return host;
     }
 }

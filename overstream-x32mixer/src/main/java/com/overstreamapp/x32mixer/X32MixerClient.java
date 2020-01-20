@@ -21,9 +21,10 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.osc.OscClient;
 import com.overstreamapp.osc.types.OscInt;
-import com.overstreamapp.keeper.*;
-import com.overstreamapp.x32mixer.state.X32ChannelGateState;
-import com.overstreamapp.x32mixer.state.X32ChannelOnState;
+import com.overstreamapp.store.Store;
+import com.overstreamapp.store.StoreKeeper;
+import com.overstreamapp.x32mixer.state.X32ChannelGate;
+import com.overstreamapp.x32mixer.state.X32ChannelOn;
 import org.slf4j.Logger;
 
 import java.net.InetSocketAddress;
@@ -37,11 +38,8 @@ public class X32MixerClient {
     private final X32MixerSettings settings;
     private final X32Mixer mixer;
 
-    private boolean[] channelOn = new boolean[32];
-    private boolean[] channelGate = new boolean[32];
-
-    private final State<X32ChannelOnState> channelOnState;
-    private final State<X32ChannelGateState> channelGateState;
+    private final Store<X32ChannelOn> channelOnStore;
+    private final Store<X32ChannelGate> channelGateStore;
 
     @Inject
     public X32MixerClient(
@@ -49,19 +47,40 @@ public class X32MixerClient {
             X32MixerSettings settings,
             EventLoopGroupManager eventLoopGroupManager,
             OscClient oscClient,
-            Keeper keeper) {
+            StoreKeeper storeKeeper) {
         this.logger = logger;
         this.settings = settings;
         this.oscClient = oscClient;
         this.remoteAddress = new InetSocketAddress(settings.host(), 10023);
         this.mixer = new X32Mixer(logger, eventLoopGroupManager, oscClient);
 
-        this.channelOnState = keeper.stateBuilder(X32ChannelOnState.class).persistenceTransient().build();
-        this.channelGateState = keeper.stateBuilder(X32ChannelGateState.class).persistenceTransient().build();
+        this.channelOnStore = storeKeeper.storeBuilder(X32ChannelOn.class)
+                .withInitial(new X32ChannelOn())
+                .withReducer((action, state) -> {
+                    var newState = new X32ChannelOn(state.getChannels());
+                    if (action instanceof X32ChannelOn.SetChannelOn) {
+                        var channelOn = (X32ChannelOn.SetChannelOn) action;
+                        newState.getChannels()[channelOn.getChannel()] = channelOn.getValue();
+                    }
+                    return newState;
+                })
+                .build();
+        this.channelGateStore = storeKeeper.storeBuilder(X32ChannelGate.class)
+                .withInitial(new X32ChannelGate())
+                .withReducer((action, state) -> {
+                    var newState = new X32ChannelGate(state.getChannels());
+                    if (action instanceof X32ChannelGate.SetChannelGate) {
+                        var channelGate = (X32ChannelGate.SetChannelGate) action;
+                        newState.getChannels()[channelGate.getChannel()] = channelGate.getValue();
+                    }
+                    return newState;
+                })
+                .build();
     }
 
     public void connect() {
         oscClient.start(remoteAddress, this.mixer.getX32OscHandler());
+        mixer.start();
 
         logger.info("Started with {}", remoteAddress);
     }
@@ -72,8 +91,8 @@ public class X32MixerClient {
                 var address = String.format("/ch/%02d/mix/on", channel);
 
                 mixer.<OscInt>subscribe(address, v -> {
-                    channelOn[channel - 1] = v.getValue() > 0;
-                    channelOnState.push(new X32ChannelOnState(channelOn));
+                    channelOnStore.dispatch(
+                            new X32ChannelOn.SetChannelOn(channel - 1, v.getValue() > 0));
                 });
 
                 logger.info("Subscribed for channel on: {}", channel);
@@ -86,9 +105,9 @@ public class X32MixerClient {
         float sensitivity = (float) Math.pow(10, -settings.meterSensitivity());
         for (int channel : channels) {
             if (channel >= 1 && channel <= 32) {
-                mixer.meters(channel,1, sensitivity,true, v -> {
-                    channelGate[channel - 1] = v > sensitivity;
-                    channelGateState.push(new X32ChannelGateState(channelGate));
+                mixer.meters(channel, 1, sensitivity, true, v -> {
+                    channelGateStore.dispatch(
+                            new X32ChannelGate.SetChannelGate(channel - 1, v > sensitivity));
                 });
 
                 logger.info("Subscribed for channel gate: {}", channel);
