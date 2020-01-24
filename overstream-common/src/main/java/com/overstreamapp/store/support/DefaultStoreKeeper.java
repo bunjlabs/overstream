@@ -28,7 +28,10 @@ import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.slf4j.Logger;
 
-import java.util.*;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class DefaultStoreKeeper implements StoreKeeper {
@@ -36,8 +39,8 @@ public class DefaultStoreKeeper implements StoreKeeper {
 
     private final Logger logger;
     private final MongoDatabase database;
-    private final Map<Class<?>, AbstractStore<?>> storeMap = new ConcurrentHashMap<>();
-    private final Set<StoreSubscriber<Object>> subscribers = Collections.newSetFromMap(new IdentityHashMap<>());
+    private final Map<Class<?>, AbstractStore<?>> storeMap;
+    private final Set<StoreSubscriber<Object>> subscribers;
 
     @Inject
     public DefaultStoreKeeper(Logger logger, MongoDatabase database) {
@@ -48,8 +51,9 @@ public class DefaultStoreKeeper implements StoreKeeper {
                         PojoCodecProvider.builder().automatic(true).build()
                 )
         );
-
         this.database = database.withCodecRegistry(codecRegistry);
+        this.storeMap = new ConcurrentHashMap<>();
+        this.subscribers = Collections.newSetFromMap(Collections.synchronizedMap(new IdentityHashMap<>()));
     }
 
     @Override

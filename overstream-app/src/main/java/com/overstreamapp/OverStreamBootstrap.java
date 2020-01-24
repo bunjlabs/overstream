@@ -23,12 +23,6 @@ import com.bunjlabs.fuga.logging.LoggingUnitBuilder;
 import com.bunjlabs.fuga.settings.SettingsUnitBuilder;
 import com.bunjlabs.fuga.settings.source.ClassPathSettingsSource;
 import com.bunjlabs.fuga.settings.source.LocalFilesSettingsSource;
-import com.overstreamapp.messageserver.MessageServerAppModule;
-import com.overstreamapp.obs.ObsAppModule;
-import com.overstreamapp.streamlabs.StreamlabsAppModule;
-import com.overstreamapp.twitchbot.TwitchBotAppModule;
-import com.overstreamapp.x32mixer.X32MixerAppModule;
-import com.overstreamapp.ympd.YmpdAppModule;
 
 public class OverStreamBootstrap {
 
@@ -64,5 +58,4 @@ public class OverStreamBootstrap {
         c.bind(AppInfo.class).auto();
         c.bind(AppSettings.class).auto();
     }
-
 }

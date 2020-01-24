@@ -1,0 +1,8 @@
+plugins {
+    id 'java-library'
+}
+
+dependencies {
+    implementation project(":overstream-common")
+    implementation project(":overstream-websocket-server")
+}

@@ -19,11 +19,14 @@ package com.overstreamapp.ympd;
 import com.bunjlabs.fuga.inject.Configuration;
 import com.bunjlabs.fuga.inject.Singleton;
 import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.ympd.support.DefaultYmpdClient;
 
 public class YmpdClientUnit implements Unit {
     @Override
     public void setup(Configuration c) {
         c.bind(YmpdClientSettings.class).auto();
-        c.bind(YmpdClient.class).auto().in(Singleton.class);
+        c.bind(YmpdCommands.class).auto();
+        c.bind(DefaultYmpdClient.class).auto();
+        c.bind(YmpdClient.class).to(DefaultYmpdClient.class).in(Singleton.class);
     }
 }

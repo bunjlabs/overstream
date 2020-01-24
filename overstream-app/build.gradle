@@ -27,9 +27,11 @@ dependencies {
     implementation project(":overstream-websocket-server")
     implementation project(":overstream-osc")
     implementation project(":overstream-message-server")
+    implementation project(":overstream-command-server")
     implementation project(":overstream-x32mixer")
     implementation project(":overstream-ympd")
-    implementation project(":overstream-twitch")
+    implementation project(":overstream-twitch-mi")
+    implementation project(":overstream-twitch-pubsub")
     implementation project(":overstream-streamlabs-socket")
     implementation project(":overstream-obs")
     implementation 'com.bunjlabs.fuga:fuga-context:0.8-SNAPSHOT'

@@ -41,6 +41,7 @@ public class X32MixerAppModule implements AppModule {
 
     @Override
     public void init(Injector injector) {
+        injector.getInstance(X32MixerCommands.class).registerCommands();
         groovyRuntime.export("X32Mixer", injector.getInstance(X32MixerClient.class));
     }
 }

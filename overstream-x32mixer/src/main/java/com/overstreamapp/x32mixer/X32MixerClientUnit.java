@@ -19,12 +19,15 @@ package com.overstreamapp.x32mixer;
 import com.bunjlabs.fuga.inject.Configuration;
 import com.bunjlabs.fuga.inject.Singleton;
 import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.x32mixer.support.DefaultX32MixerClient;
 
 public class X32MixerClientUnit implements Unit {
 
     @Override
     public void setup(Configuration c) {
         c.bind(X32MixerSettings.class).auto();
-        c.bind(X32MixerClient.class).auto().in(Singleton.class);
+        c.bind(X32MixerCommands.class).auto();
+        c.bind(DefaultX32MixerClient.class).auto();
+        c.bind(X32MixerClient.class).to(DefaultX32MixerClient.class).in(Singleton.class);
     }
 }

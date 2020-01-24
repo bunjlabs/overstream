@@ -31,6 +31,7 @@ public class MongoUnit implements Unit {
         c.bind(MongoDatabaseProvider.class).auto();
 
         c.bind(MongoClient.class).toProvider(MongoClientProvider.class).in(Singleton.class);
-        c.bind(MongoDatabase.class).toProvider(MongoDatabaseProvider.class).in(Singleton.class);;
+        c.bind(MongoDatabase.class).toProvider(MongoDatabaseProvider.class).in(Singleton.class);
+        ;
     }
 }

@@ -20,7 +20,6 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.osc.OscClient;
 import com.overstreamapp.osc.OscHandler;
-import com.overstreamapp.osc.OscWriteException;
 import com.overstreamapp.osc.types.OscPacket;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -59,8 +58,8 @@ public class NettyOscClient implements OscClient {
     }
 
     @Override
-    public void send(OscPacket packet)  {
-        if(channel != null) {
+    public void send(OscPacket packet) {
+        if (channel != null) {
             channel.writeAndFlush(packet);
         }
     }

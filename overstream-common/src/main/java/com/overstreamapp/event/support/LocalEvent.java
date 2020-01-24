@@ -33,7 +33,7 @@ class LocalEvent<T> implements Event<T> {
     private final DefaultEventKeeper eventKeeper;
     private final Class<T> type;
 
-    LocalEvent( DefaultEventKeeper eventKeeper, Class<T> type) {
+    LocalEvent(DefaultEventKeeper eventKeeper, Class<T> type) {
         this.logger = eventKeeper.getLogger();
         this.eventKeeper = eventKeeper;
         this.type = type;
@@ -48,7 +48,7 @@ class LocalEvent<T> implements Event<T> {
     public void fire(T event) {
         logger.trace("Event: {} {}", type, event);
 
-        if(event != null) {
+        if (event != null) {
             notifyGlobalSubscribers(event);
             notifySubscribers(event);
         }

@@ -68,16 +68,10 @@ public class NettyWebSocketClient implements WebSocketClient {
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
                 .handler(new NettyWebSocketClientInitializer(uri, sslContext, handler));
 
-        //b.connect(uri.getHost(), uri.getPort());
-
-
         b.connect(uri.getHost(), uri.getPort()).addListener(future -> {
-
-        if(!future.isSuccess()) {
-            handler.onClose(null, -1, "Unable to connect", false);
-        }
-    });
-
-
+            if (!future.isSuccess()) {
+                handler.onClose(null, -1, "Unable to connect", false);
+            }
+        });
     }
 }

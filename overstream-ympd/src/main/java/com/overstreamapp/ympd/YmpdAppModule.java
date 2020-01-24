@@ -41,6 +41,7 @@ public class YmpdAppModule implements AppModule {
 
     @Override
     public void init(Injector injector) {
+        injector.getInstance(YmpdCommands.class).registerCommands();
         groovyRuntime.export("Ympd", injector.getInstance(YmpdClient.class));
     }
 }

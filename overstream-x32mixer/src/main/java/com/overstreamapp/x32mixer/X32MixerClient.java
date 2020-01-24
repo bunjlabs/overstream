@@ -16,103 +16,14 @@
 
 package com.overstreamapp.x32mixer;
 
+public interface X32MixerClient {
+    void connect();
 
-import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.network.EventLoopGroupManager;
-import com.overstreamapp.osc.OscClient;
-import com.overstreamapp.osc.types.OscInt;
-import com.overstreamapp.store.Store;
-import com.overstreamapp.store.StoreKeeper;
-import com.overstreamapp.x32mixer.state.X32ChannelGate;
-import com.overstreamapp.x32mixer.state.X32ChannelOn;
-import org.slf4j.Logger;
+    void channelOn(int channel, boolean on);
 
-import java.net.InetSocketAddress;
-import java.net.SocketAddress;
+    void busOn(int bus, boolean on);
 
-public class X32MixerClient {
+    void subscribeChannelOn(int... channels);
 
-    private final Logger logger;
-    private final SocketAddress remoteAddress;
-    private final OscClient oscClient;
-    private final X32MixerSettings settings;
-    private final X32Mixer mixer;
-
-    private final Store<X32ChannelOn> channelOnStore;
-    private final Store<X32ChannelGate> channelGateStore;
-
-    @Inject
-    public X32MixerClient(
-            Logger logger,
-            X32MixerSettings settings,
-            EventLoopGroupManager eventLoopGroupManager,
-            OscClient oscClient,
-            StoreKeeper storeKeeper) {
-        this.logger = logger;
-        this.settings = settings;
-        this.oscClient = oscClient;
-        this.remoteAddress = new InetSocketAddress(settings.host(), 10023);
-        this.mixer = new X32Mixer(logger, eventLoopGroupManager, oscClient);
-
-        this.channelOnStore = storeKeeper.storeBuilder(X32ChannelOn.class)
-                .withInitial(new X32ChannelOn())
-                .withReducer((action, state) -> {
-                    var newState = new X32ChannelOn(state.getChannels());
-                    if (action instanceof X32ChannelOn.SetChannelOn) {
-                        var channelOn = (X32ChannelOn.SetChannelOn) action;
-                        newState.getChannels()[channelOn.getChannel()] = channelOn.getValue();
-                    }
-                    return newState;
-                })
-                .build();
-        this.channelGateStore = storeKeeper.storeBuilder(X32ChannelGate.class)
-                .withInitial(new X32ChannelGate())
-                .withReducer((action, state) -> {
-                    var newState = new X32ChannelGate(state.getChannels());
-                    if (action instanceof X32ChannelGate.SetChannelGate) {
-                        var channelGate = (X32ChannelGate.SetChannelGate) action;
-                        newState.getChannels()[channelGate.getChannel()] = channelGate.getValue();
-                    }
-                    return newState;
-                })
-                .build();
-    }
-
-    public void connect() {
-        oscClient.start(remoteAddress, this.mixer.getX32OscHandler());
-        mixer.start();
-
-        logger.info("Started with {}", remoteAddress);
-    }
-
-    public void subscribeChannelOn(int... channels) {
-        for (int channel : channels) {
-            if (channel >= 1 && channel <= 32) {
-                var address = String.format("/ch/%02d/mix/on", channel);
-
-                mixer.<OscInt>subscribe(address, v -> {
-                    channelOnStore.dispatch(
-                            new X32ChannelOn.SetChannelOn(channel - 1, v.getValue() > 0));
-                });
-
-                logger.info("Subscribed for channel on: {}", channel);
-            }
-        }
-
-    }
-
-    public void subscribeChannelGate(int... channels) {
-        float sensitivity = (float) Math.pow(10, -settings.meterSensitivity());
-        for (int channel : channels) {
-            if (channel >= 1 && channel <= 32) {
-                mixer.meters(channel, 1, sensitivity, true, v -> {
-                    channelGateStore.dispatch(
-                            new X32ChannelGate.SetChannelGate(channel - 1, v > sensitivity));
-                });
-
-                logger.info("Subscribed for channel gate: {}", channel);
-            }
-        }
-    }
-
+    void subscribeChannelGate(int... channels);
 }

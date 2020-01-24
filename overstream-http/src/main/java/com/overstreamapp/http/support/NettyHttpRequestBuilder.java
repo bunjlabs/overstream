@@ -20,7 +20,6 @@ import com.overstreamapp.http.HttpMethod;
 import com.overstreamapp.http.HttpRequestBuilder;
 import com.overstreamapp.http.ResponseFuture;
 
-import java.net.InetSocketAddress;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
@@ -47,20 +46,20 @@ class NettyHttpRequestBuilder implements HttpRequestBuilder {
     @Override
     public ResponseFuture execute() {
         try {
-        var request = new InternalHttpRequest(method, url.toURI());
+            var request = new InternalHttpRequest(method, url.toURI());
 
-        request.setHeaders(headers);
+            request.setHeaders(headers);
 
-        var host = url.getHost() == null ? "localhost" : url.getHost();
-        var port = url.getPort() <= 0 ? 80 : url.getPort();
-        var ssl = "https".equalsIgnoreCase(url.getProtocol());
-        var connectionPoint = new ConnectionPoint(host, port, ssl);
+            var host = url.getHost() == null ? "localhost" : url.getHost();
+            var port = url.getPort() <= 0 ? 80 : url.getPort();
+            var ssl = "https".equalsIgnoreCase(url.getProtocol());
+            var connectionPoint = new ConnectionPoint(host, port, ssl);
 
-        var connection = client.getConnection(connectionPoint);
+            var connection = client.getConnection(connectionPoint);
 
-        connection.start(request);
+            connection.start(request);
 
-        return null;
+            return null;
         } catch (URISyntaxException e) {
             e.printStackTrace();
             return null;

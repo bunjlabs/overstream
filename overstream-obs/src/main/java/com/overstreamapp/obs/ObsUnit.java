@@ -17,12 +17,16 @@
 package com.overstreamapp.obs;
 
 import com.bunjlabs.fuga.inject.Configuration;
+import com.bunjlabs.fuga.inject.Singleton;
 import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.obs.support.DefaultObsClient;
 
 public class ObsUnit implements Unit {
     @Override
     public void setup(Configuration c) {
         c.bind(ObsSettings.class).auto();
-        c.bind(ObsClient.class).auto();
+        c.bind(ObsCommands.class).auto();
+        c.bind(DefaultObsClient.class).auto();
+        c.bind(ObsClient.class).to(DefaultObsClient.class).in(Singleton.class);
     }
 }

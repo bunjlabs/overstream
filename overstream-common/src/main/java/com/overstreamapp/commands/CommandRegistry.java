@@ -20,7 +20,7 @@ import java.util.Map;
 
 public interface CommandRegistry {
 
-    CommandBuilder builder(String name);
+    CommandBuilder builder(String... aliases);
 
     String executeFlat(String command);
 

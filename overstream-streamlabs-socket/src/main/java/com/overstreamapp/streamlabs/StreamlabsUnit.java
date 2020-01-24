@@ -17,12 +17,16 @@
 package com.overstreamapp.streamlabs;
 
 import com.bunjlabs.fuga.inject.Configuration;
+import com.bunjlabs.fuga.inject.Singleton;
 import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.streamlabs.support.DefaultStreamlabsClient;
 
 public class StreamlabsUnit implements Unit {
     @Override
     public void setup(Configuration c) {
         c.bind(StreamlabsSettings.class).auto();
-        c.bind(StreamlabsClient.class).auto();
+        c.bind(StreamlabsCommands.class).auto();
+        c.bind(DefaultStreamlabsClient.class).auto();
+        c.bind(StreamlabsClient.class).to(DefaultStreamlabsClient.class).in(Singleton.class);
     }
 }

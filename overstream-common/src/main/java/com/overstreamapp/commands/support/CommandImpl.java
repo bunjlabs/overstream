@@ -36,8 +36,6 @@ class CommandImpl implements Command {
         return aliases;
     }
 
-
-
     @Override
     public String execute(Map<String, Object> parameters) {
         try {

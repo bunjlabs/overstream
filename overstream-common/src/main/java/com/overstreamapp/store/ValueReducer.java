@@ -26,10 +26,10 @@ public class ValueReducer<T> implements Reducer<T> {
     @Override
     @SuppressWarnings("unchecked")
     public T reduce(Action action, T state) {
-        if(action instanceof ValueAction) {
+        if (action instanceof ValueAction) {
             var newState = ((ValueAction) action).getValue();
 
-            if(newState != null && type.isAssignableFrom(newState.getClass())) {
+            if (newState != null && type.isAssignableFrom(newState.getClass())) {
                 return (T) newState;
             }
         }

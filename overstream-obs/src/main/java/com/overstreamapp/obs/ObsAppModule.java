@@ -41,6 +41,7 @@ public class ObsAppModule implements AppModule {
 
     @Override
     public void init(Injector injector) {
+        injector.getInstance(ObsCommands.class).registerCommands();
         groovyRuntime.export("Obs", injector.getInstance(ObsClient.class));
     }
 }

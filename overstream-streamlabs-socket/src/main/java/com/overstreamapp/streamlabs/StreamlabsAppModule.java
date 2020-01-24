@@ -41,6 +41,7 @@ public class StreamlabsAppModule implements AppModule {
 
     @Override
     public void init(Injector injector) {
+        injector.getInstance(StreamlabsCommands.class).registerCommands();
         groovyRuntime.export("Streamlabs", injector.getInstance(StreamlabsClient.class));
     }
 }

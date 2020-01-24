@@ -29,7 +29,7 @@
     <logger name="com.bunjlabs.fuga" level="WARN"/>
     <logger name="com.overstreamapp" level="TRACE"/>
 
-    <root  level="TRACE">
+    <root level="TRACE">
         <appender-ref ref="console"/>
     </root>
 

@@ -44,7 +44,7 @@ import com.overstreamapp.osc.NettyOscClientUnit;
 import com.overstreamapp.store.StoreKeeper;
 import com.overstreamapp.store.StoreKeeperUnit;
 import com.overstreamapp.streamlabs.StreamlabsAppModule;
-import com.overstreamapp.twitchbot.TwitchBotAppModule;
+import com.overstreamapp.twitchmi.TwitchMiAppModule;
 import com.overstreamapp.twitchpubsub.TwitchPubSubAppModule;
 import com.overstreamapp.websocket.client.netty.NettyWebSocketClientUnit;
 import com.overstreamapp.websocket.server.NettyWebSocketServerUnit;
@@ -76,7 +76,7 @@ public class OverStreamApp {
                 CommandServerAppModule.class,
                 ObsAppModule.class,
                 StreamlabsAppModule.class,
-                TwitchBotAppModule.class,
+                TwitchMiAppModule.class,
                 TwitchPubSubAppModule.class,
                 X32MixerAppModule.class,
                 YmpdAppModule.class

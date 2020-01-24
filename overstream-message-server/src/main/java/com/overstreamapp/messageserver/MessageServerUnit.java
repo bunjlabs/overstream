@@ -19,12 +19,14 @@ package com.overstreamapp.messageserver;
 import com.bunjlabs.fuga.inject.Configuration;
 import com.bunjlabs.fuga.inject.Singleton;
 import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.messageserver.support.DefaultMessageServer;
 
 public class MessageServerUnit implements Unit {
 
     @Override
     public void setup(Configuration c) {
         c.bind(MessageServerSettings.class).auto();
-        c.bind(MessageServer.class).auto().in(Singleton.class);
+        c.bind(DefaultMessageServer.class).auto();
+        c.bind(MessageServer.class).to(DefaultMessageServer.class).in(Singleton.class);
     }
 }

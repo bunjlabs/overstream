@@ -22,14 +22,14 @@ import com.overstreamapp.commands.CommandBuilder;
 import java.util.*;
 import java.util.function.Function;
 
-public class DefaultCommandBuilder implements CommandBuilder {
+class DefaultCommandBuilder implements CommandBuilder {
     private final DefaultCommandRegistry commandRegistry;
     private final Set<String> aliases = new HashSet<>();
     private Function<Map<String, Object>, String> function;
 
-    public DefaultCommandBuilder(DefaultCommandRegistry commandRegistry, String name) {
+    DefaultCommandBuilder(DefaultCommandRegistry commandRegistry, String... aliases) {
         this.commandRegistry = commandRegistry;
-        aliases.add(name);
+        this.aliases.addAll(Arrays.asList(aliases));
     }
 
     @Override

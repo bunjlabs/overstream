@@ -20,8 +20,6 @@ import com.bunjlabs.fuga.settings.SettingDefault;
 import com.bunjlabs.fuga.settings.SettingName;
 import com.bunjlabs.fuga.settings.Settings;
 
-import java.util.List;
-
 @Settings("application")
 public interface AppSettings {
 

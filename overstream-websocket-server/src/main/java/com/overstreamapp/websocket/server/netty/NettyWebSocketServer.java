@@ -18,7 +18,6 @@ package com.overstreamapp.websocket.server.netty;
 
 import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.network.EventLoopGroupManager;
-import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.server.WebSocketHandlerFactory;
 import com.overstreamapp.websocket.server.WebSocketServer;
 import io.netty.bootstrap.ServerBootstrap;

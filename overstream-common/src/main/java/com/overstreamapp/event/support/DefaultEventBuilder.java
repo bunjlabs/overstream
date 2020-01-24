@@ -33,7 +33,7 @@ class DefaultEventBuilder<T> implements EventBuilder<T> {
         var event = new LocalEvent<>(eventKeeper, type);
 
         eventKeeper.registerEvent(event);
-        
+
         return event;
     }
 }

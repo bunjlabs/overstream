@@ -28,12 +28,14 @@ import com.overstreamapp.event.Event;
 import com.overstreamapp.event.EventKeeper;
 import org.slf4j.Logger;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class DefaultCommandRegistry implements CommandRegistry {
     private final Logger logger;
-    private final Map<String, Command> commands = new HashMap<>();
+    private final Map<String, Command> commands = new ConcurrentHashMap<>();
     private final CommandParser commandParser = new CommandParser();
     private final Event<CommandEvent> commandEvent;
 
@@ -42,18 +44,22 @@ public class DefaultCommandRegistry implements CommandRegistry {
         this.logger = logger;
         this.commandEvent = eventKeeper.eventBuilder(CommandEvent.class).build();
 
+        builder("help", "list").command(p -> "List of available commands:\n" + String.join("\n", listCommands())).build();
         builder("version").command(p -> appInfo.name() + "-" + appInfo.version()).build();
         builder("echo").command(p -> p.getOrDefault("text", "").toString()).build();
         builder("nop").command(p -> "").build();
     }
 
     @Override
-    public CommandBuilder builder(String name) {
-        return new DefaultCommandBuilder(this, name);
+    public CommandBuilder builder(String... aliases) {
+        return new DefaultCommandBuilder(this, aliases);
     }
 
     @Override
     public String executeFlat(String fullCommand) {
+        if (fullCommand.isBlank()) {
+            return null;
+        }
         try {
             var commandRequest = commandParser.parse(fullCommand);
 
@@ -90,12 +96,18 @@ public class DefaultCommandRegistry implements CommandRegistry {
     void register(Command command) {
         var aliases = command.getAliases();
 
-        logger.info("Register command: {} ", aliases);
+        logger.debug("Register command: {} ", aliases);
 
         aliases.forEach(alias -> {
             if (!commands.containsKey(alias)) {
                 commands.put(alias, command);
             }
         });
+    }
+
+    private List<String> listCommands() {
+        return this.commands.keySet().stream()
+                .sorted(String::compareTo)
+                .collect(Collectors.toList());
     }
 }

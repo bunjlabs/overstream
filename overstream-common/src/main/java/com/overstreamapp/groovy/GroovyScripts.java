@@ -19,7 +19,6 @@ package com.overstreamapp.groovy;
 import com.bunjlabs.fuga.inject.Inject;
 import org.slf4j.Logger;
 
-import java.io.File;
 import java.nio.file.Path;
 
 public class GroovyScripts {

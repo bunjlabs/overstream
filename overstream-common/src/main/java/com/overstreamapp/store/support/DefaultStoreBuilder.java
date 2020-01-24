@@ -16,7 +16,6 @@
 
 package com.overstreamapp.store.support;
 
-import com.mongodb.client.MongoCollection;
 import com.overstreamapp.store.Reducer;
 import com.overstreamapp.store.Store;
 import com.overstreamapp.store.StoreBuilder;

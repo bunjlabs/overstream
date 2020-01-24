@@ -26,9 +26,8 @@ import java.util.Set;
 
 abstract class AbstractStore<T> implements Store<T> {
 
-    private final Set<StoreSubscriber<T>> subscribers = Collections.newSetFromMap(new IdentityHashMap<>());
-
     protected final Logger logger;
+    private final Set<StoreSubscriber<T>> subscribers;
     private final DefaultStoreKeeper storeKeeper;
     private final Class<T> type;
     private final Reducer<T> reducer;
@@ -37,6 +36,7 @@ abstract class AbstractStore<T> implements Store<T> {
 
     AbstractStore(DefaultStoreKeeper storeKeeper, Class<T> type, Reducer<T> rootReducer, T initialState) {
         this.logger = storeKeeper.getLogger();
+        this.subscribers = Collections.newSetFromMap(Collections.synchronizedMap(new IdentityHashMap<>()));
         this.storeKeeper = storeKeeper;
         this.type = type;
         this.initialState = initialState;

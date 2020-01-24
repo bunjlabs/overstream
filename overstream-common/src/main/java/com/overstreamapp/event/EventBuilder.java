@@ -19,6 +19,5 @@ package com.overstreamapp.event;
 public interface EventBuilder<T> {
 
 
-
     Event<T> build();
 }

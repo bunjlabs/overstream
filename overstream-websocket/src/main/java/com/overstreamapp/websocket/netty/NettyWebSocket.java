@@ -20,7 +20,10 @@ import com.bunjlabs.fuga.util.ObjectUtils;
 import com.overstreamapp.websocket.WebSocket;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.handler.codec.http.websocketx.*;
+import io.netty.handler.codec.http.websocketx.BinaryWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.CloseWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
+import io.netty.handler.codec.http.websocketx.WebSocketCloseStatus;
 
 import java.net.InetSocketAddress;
 import java.net.URI;

@@ -17,7 +17,6 @@
 package com.overstreamapp.http;
 
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
 
 public interface HttpClient {

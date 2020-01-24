@@ -25,15 +25,17 @@ import java.util.Map;
 
 public class CommandParser {
 
+    private static CommandParserException unexpectedSymbol(Lexer lexer) {
+        return new CommandParserException(lexer, "Unexpected symbol: " + lexer.getValue());
+    }
+
     public CommandRequest parse(String source) throws CommandParserException {
         return parse(new StringReader(source));
     }
 
-
     public CommandRequest parse(Reader reader) throws CommandParserException {
         return parseCommand(new Lexer(reader));
     }
-
 
     private CommandRequest parseCommand(Lexer lexer) throws CommandParserException {
         lexer.next();
@@ -92,9 +94,5 @@ public class CommandParser {
         }
 
         return parameters;
-    }
-
-    private static CommandParserException unexpectedSymbol(Lexer lexer) {
-        return new CommandParserException(lexer, "Unexpected symbol: " + lexer.getValue());
     }
 }
