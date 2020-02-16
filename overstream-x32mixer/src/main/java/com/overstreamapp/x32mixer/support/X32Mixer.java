@@ -63,9 +63,9 @@ class X32Mixer {
     }
 
     private void onTimer() {
-        if (this.subscriptions.isEmpty() || this.meters.isEmpty()) return;
+        if (this.subscriptions.isEmpty() && this.meters.isEmpty()) return;
 
-        if (x32OscHandler.getLastMessageTime() > 0 && System.currentTimeMillis() - x32OscHandler.getLastMessageTime() > 5000) {
+        if (System.currentTimeMillis() - x32OscHandler.getLastMessageTime() > 5000) {
             logger.warn("No response from mixer. Renewing ...");
 
             subscriptions.values().forEach(sub -> enableSubscription(sub.getAddress()));

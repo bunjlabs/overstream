@@ -17,11 +17,12 @@
 package com.overstreamapp.twitchmi;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
+import com.overstreamapp.shell.CommandRegistry;
 import com.overstreamapp.store.Store;
 import com.overstreamapp.store.StoreKeeper;
 import com.overstreamapp.twitchmi.state.TwitchChat;
 
+import java.util.List;
 import java.util.Map;
 
 public class TwitchMiCommands {
@@ -40,51 +41,51 @@ public class TwitchMiCommands {
     }
 
     void registerCommands() {
-        commandRegistry.builder("twitchmi.state").command(this::state).build();
-        commandRegistry.builder("twitchmi.connect").command(this::connect).build();
-        commandRegistry.builder("twitchmi.disconnect").command(this::disconnect).build();
-        commandRegistry.builder("twitchmi.reconnect").command(this::reconnect).build();
+        commandRegistry.builder("twitchmi.state").function(this::state).build();
+        commandRegistry.builder("twitchmi.connect").function(this::connect).build();
+        commandRegistry.builder("twitchmi.disconnect").function(this::disconnect).build();
+        commandRegistry.builder("twitchmi.reconnect").function(this::reconnect).build();
 
-        commandRegistry.builder("twitchmi.say").command(this::say).build();
-        commandRegistry.builder("twitchmi.last").command(this::lastMessage).build();
+        commandRegistry.builder("twitchmi.say").function(this::say).build();
+        commandRegistry.builder("twitchmi.last").function(this::lastMessage).build();
     }
 
-    private String state(Map<String, Object> parameters) {
+    private String state() {
         return "TwitchMI: " + twitch.getConnectionState().name();
     }
 
-    private String connect(Map<String, Object> parameters) {
+    private String connect() {
         twitch.connect();
-        return "OK";
+        return "ok";
     }
 
-    private String disconnect(Map<String, Object> parameters) {
+    private String disconnect() {
         twitch.disconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String reconnect(Map<String, Object> parameters) {
+    private String reconnect() {
         twitch.reconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String say(Map<String, Object> parameters) {
-        if (!parameters.containsKey("text")) {
-            return "text parameter is required";
+    private String say(List<Object> arguments, Map<String, Object> namedArguments) {
+        if (arguments.size() < 1) {
+            return "text arguments is required";
         }
 
-        var text = parameters.get("text").toString();
-        if (parameters.containsKey("channel")) {
-            var channel = parameters.get("channel");
+        var text = arguments.get(0).toString();
+        if (namedArguments.containsKey("channel")) {
+            var channel = namedArguments.get("channel");
             twitch.sendMessage(channel.toString(), text);
         } else {
             twitch.sendMessage(text);
         }
 
-        return "OK";
+        return "ok";
     }
 
-    private String lastMessage(Map<String, Object> parameters) {
+    private String lastMessage() {
         var msg = chatStore.getState().getMessage();
         return String.format("Last message: @%s <%s>: %s", msg.getChannelName(), msg.getUserName(), msg.getText());
     }

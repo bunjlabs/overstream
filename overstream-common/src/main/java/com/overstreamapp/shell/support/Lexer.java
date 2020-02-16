@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.parser;
+package com.overstreamapp.shell.support;
 
 import java.io.IOException;
 import java.io.Reader;
 
-import static com.overstreamapp.commands.parser.Token.*;
+import static com.overstreamapp.shell.support.Token.*;
 
 class Lexer {
 

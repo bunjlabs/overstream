@@ -17,6 +17,7 @@
 package com.overstreamapp.osc.netty;
 
 import com.bunjlabs.fuga.inject.Inject;
+import com.overstreamapp.network.ConnectionRegistry;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.osc.OscClient;
 import com.overstreamapp.osc.OscHandler;
@@ -33,12 +34,14 @@ public class NettyOscClient implements OscClient {
 
     private final Logger logger;
     private final EventLoopGroupManager loopGroupManager;
+    private final ConnectionRegistry connectionRegistry;
     private Channel channel;
 
     @Inject
-    public NettyOscClient(Logger logger, EventLoopGroupManager loopGroupManager) {
+    public NettyOscClient(Logger logger, EventLoopGroupManager loopGroupManager, ConnectionRegistry connectionRegistry) {
         this.logger = logger;
         this.loopGroupManager = loopGroupManager;
+        this.connectionRegistry = connectionRegistry;
     }
 
     @Override
@@ -48,7 +51,7 @@ public class NettyOscClient implements OscClient {
         Bootstrap b = new Bootstrap();
         b.group(workerGroup)
                 .channel(NioDatagramChannel.class)
-                .handler(new NettyOscClientInitializer(handler));
+                .handler(new NettyOscClientInitializer(connectionRegistry, handler));
 
         try {
             this.channel = b.connect(socketAddress).sync().channel();

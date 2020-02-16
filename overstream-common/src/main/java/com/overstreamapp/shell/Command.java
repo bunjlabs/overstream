@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands;
+package com.overstreamapp.shell;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,5 +24,5 @@ public interface Command {
 
     Set<String> getAliases();
 
-    String execute(Map<String, Object> parameters);
+    Object execute(List<Object> arguments, Map<String, Object> namedArguments);
 }

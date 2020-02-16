@@ -16,53 +16,58 @@
 
 package com.overstreamapp.http.support;
 
-import com.overstreamapp.http.HttpMethod;
+import com.overstreamapp.http.HttpHandler;
 import com.overstreamapp.http.HttpRequestBuilder;
-import com.overstreamapp.http.ResponseFuture;
+import io.netty.handler.codec.http.*;
 
-import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.function.BiConsumer;
 
 class NettyHttpRequestBuilder implements HttpRequestBuilder {
-    private final Map<String, String> headers = new HashMap<>();
-    private final HttpMethod method;
+    private final FullHttpRequest request;
     private final URL url;
-    private final NettyHttpClient client;
+    private final AbstractHttpClient client;
 
-    NettyHttpRequestBuilder(HttpMethod method, URL url, NettyHttpClient client) {
-        this.method = method;
+    NettyHttpRequestBuilder(HttpMethod method, URL url, AbstractHttpClient client) {
+        this.request = new DefaultFullHttpRequest(HttpVersion.HTTP_1_1, method, url.getPath());
         this.url = url;
         this.client = client;
     }
 
     @Override
-    public HttpRequestBuilder header(String name, String value) {
-        headers.put(name, value);
+    public HttpRequestBuilder header(String name, Object value) {
+        request.headers().add(name, value);
         return this;
     }
 
     @Override
-    public ResponseFuture execute() {
-        try {
-            var request = new InternalHttpRequest(method, url.toURI());
+    public void execute() {
+        execute((HttpHandler) null);
+    }
 
-            request.setHeaders(headers);
+    @Override
+    public void execute(HttpHandler handler) {
+        var ssl = "https".equalsIgnoreCase(url.getProtocol());
+        var host = url.getHost() == null ? "localhost" : url.getHost();
+        var port = url.getPort() <= 0 ? (ssl ? 443 : 80) : url.getPort();
+        var connectionPoint = new ConnectionPoint(host, port, ssl);
 
-            var host = url.getHost() == null ? "localhost" : url.getHost();
-            var port = url.getPort() <= 0 ? 80 : url.getPort();
-            var ssl = "https".equalsIgnoreCase(url.getProtocol());
-            var connectionPoint = new ConnectionPoint(host, port, ssl);
+        client.execute(connectionPoint, request, handler);
+    }
 
-            var connection = client.getConnection(connectionPoint);
+    @Override
+    public void execute(BiConsumer<FullHttpResponse, Throwable> consumer) {
+        execute(new HttpHandler() {
 
-            connection.start(request);
+            @Override
+            public void onResponse(FullHttpResponse response) {
+                consumer.accept(response, null);
+            }
 
-            return null;
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-            return null;
-        }
+            @Override
+            public void onError(Throwable cause) {
+                consumer.accept(null, cause);
+            }
+        });
     }
 }

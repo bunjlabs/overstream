@@ -21,6 +21,8 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.bunjlabs.fuga.inject.Injector;
 import groovy.lang.Binding;
 import groovy.lang.GroovyShell;
+import groovy.lang.GroovySystem;
+import org.codehaus.groovy.control.CompilerConfiguration;
 
 public class GroovyRuntime {
 
@@ -33,6 +35,7 @@ public class GroovyRuntime {
         binding.setProperty("Injector", injector);
 
         this.groovyShell = new GroovyShell(binding);
+
     }
 
     public GroovyShell getGroovyShell() {

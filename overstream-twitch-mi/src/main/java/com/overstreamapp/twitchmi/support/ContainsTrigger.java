@@ -14,25 +14,21 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands;
+package com.overstreamapp.twitchmi.support;
 
-import java.util.Map;
+import com.overstreamapp.twitchmi.domain.ChatMessage;
 
-public class CommandRequest {
+import java.util.Set;
+import java.util.function.Consumer;
 
-    private String command;
-    private Map<String, Object> params;
+class ContainsTrigger extends AbstractTrigger {
 
-    public CommandRequest(String command, Map<String, Object> params) {
-        this.command = command;
-        this.params = params;
+    ContainsTrigger(DefaultTwitchMi twitchMi, Set<String> aliases, Consumer<ChatMessage> consumer) {
+        super(twitchMi, aliases, consumer);
     }
 
-    public String getCommand() {
-        return command;
-    }
-
-    public Map<String, Object> getParams() {
-        return params;
+    @Override
+    boolean check(String message) {
+        return aliases.stream().anyMatch(message::contains);
     }
 }

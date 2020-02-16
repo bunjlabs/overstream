@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.http;
+package com.overstreamapp.twitchmi;
 
-public enum HttpMethod {
-    GET, HEAD, PUT, POST, DELETE, OPTIONS
+public enum TwitchMiTriggerMode {
+    EQUALS, CONTAINS, PREFIX, SUFFIX, REGEX
 }

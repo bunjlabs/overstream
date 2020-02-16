@@ -14,33 +14,16 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.event;
+package com.overstreamapp.shell;
 
+import java.util.List;
 import java.util.Map;
 
-public class CommandEvent {
-    private String command;
-    private Map<String, Object> params;
-    private String result;
+public interface CommandRegistry {
 
-    public CommandEvent() {
-    }
+    CommandBuilder builder(String... aliases);
 
-    public CommandEvent(String command, Map<String, Object> params, String result) {
-        this.command = command;
-        this.params = params;
-        this.result = result;
-    }
+    Object executeFlat(String command);
 
-    public String getCommand() {
-        return command;
-    }
-
-    public Map<String, Object> getParams() {
-        return params;
-    }
-
-    public String getResult() {
-        return result;
-    }
+    Object execute(String name, List<Object> arguments, Map<String, Object> namedArguments);
 }

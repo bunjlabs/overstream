@@ -17,9 +17,7 @@
 package com.overstreamapp.streamlabs;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
-
-import java.util.Map;
+import com.overstreamapp.shell.CommandRegistry;
 
 public class StreamlabsCommands {
 
@@ -33,28 +31,28 @@ public class StreamlabsCommands {
     }
 
     void registerCommands() {
-        commandRegistry.builder("streamlabs.state").command(this::state).build();
-        commandRegistry.builder("streamlabs.connect").command(this::connect).build();
-        commandRegistry.builder("streamlabs.disconnect").command(this::disconnect).build();
-        commandRegistry.builder("streamlabs.reconnect").command(this::reconnect).build();
+        commandRegistry.builder("streamlabs.state").function(this::state).build();
+        commandRegistry.builder("streamlabs.connect").function(this::connect).build();
+        commandRegistry.builder("streamlabs.disconnect").function(this::disconnect).build();
+        commandRegistry.builder("streamlabs.reconnect").function(this::reconnect).build();
     }
 
-    private String state(Map<String, Object> parameters) {
+    private String state() {
         return "Streamlabs: " + streamlabs.getConnectionState().name();
     }
 
-    private String connect(Map<String, Object> parameters) {
+    private String connect() {
         streamlabs.connect();
-        return "OK";
+        return "ok";
     }
 
-    private String disconnect(Map<String, Object> parameters) {
+    private String disconnect() {
         streamlabs.disconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String reconnect(Map<String, Object> parameters) {
+    private String reconnect() {
         streamlabs.reconnect();
-        return "OK";
+        return "ok";
     }
 }

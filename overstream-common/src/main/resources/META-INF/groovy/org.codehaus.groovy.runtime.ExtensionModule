@@ -1,0 +1,3 @@
+moduleName = command-builder-extensions
+moduleVersion = 1.0
+extensionClasses = com.overstreamapp.shell.CommandBuilderGroovyExtension

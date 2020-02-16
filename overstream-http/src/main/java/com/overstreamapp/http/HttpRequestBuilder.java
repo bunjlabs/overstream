@@ -16,9 +16,17 @@
 
 package com.overstreamapp.http;
 
+import io.netty.handler.codec.http.FullHttpResponse;
+
+import java.util.function.BiConsumer;
+
 public interface HttpRequestBuilder {
 
-    HttpRequestBuilder header(String name, String value);
+    HttpRequestBuilder header(String name, Object value);
 
-    ResponseFuture execute();
+    void execute();
+
+    void execute(HttpHandler handler);
+
+    void execute(BiConsumer<FullHttpResponse, Throwable> consumer);
 }

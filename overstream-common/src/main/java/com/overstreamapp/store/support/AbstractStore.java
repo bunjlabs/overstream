@@ -82,6 +82,11 @@ abstract class AbstractStore<T> implements Store<T> {
     }
 
     @Override
+    public void dispatch(T newState) {
+        dispatch(new ValueAction(newState));
+    }
+
+    @Override
     public StoreSubscription subscribe(StoreSubscriber<T> subscriber) {
         logger.trace("Subscription: {} {}", type, subscriber);
 

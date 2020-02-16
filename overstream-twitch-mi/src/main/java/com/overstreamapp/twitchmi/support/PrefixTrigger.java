@@ -14,8 +14,21 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.parser;
+package com.overstreamapp.twitchmi.support;
 
-enum Token {
-    TK_STRING, TK_NUMBER, TK_BOOL, TK_NULL, TK_EQ, TK_EOS, TK_ERROR
+import com.overstreamapp.twitchmi.domain.ChatMessage;
+
+import java.util.Set;
+import java.util.function.Consumer;
+
+class PrefixTrigger extends AbstractTrigger {
+
+    PrefixTrigger(DefaultTwitchMi twitchMi, Set<String> aliases, Consumer<ChatMessage> consumer) {
+        super(twitchMi, aliases, consumer);
+    }
+
+    @Override
+    boolean check(String message) {
+        return aliases.stream().anyMatch(message::startsWith);
+    }
 }

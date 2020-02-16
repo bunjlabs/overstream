@@ -17,7 +17,7 @@
 package com.overstreamapp.commandserver.support;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
+import com.overstreamapp.shell.CommandRegistry;
 import com.overstreamapp.commandserver.CommandServer;
 import com.overstreamapp.commandserver.CommandServerSettings;
 import com.overstreamapp.commandserver.event.CommandServerConnectionEvent;
@@ -80,8 +80,8 @@ public class DefaultCommandServer implements CommandServer {
 
             var result = commandRegistry.executeFlat(message);
 
-            if (result != null && !result.isBlank()) {
-                socket.send(result);
+            if (result != null) {
+                socket.send(result.toString());
             }
         }
 

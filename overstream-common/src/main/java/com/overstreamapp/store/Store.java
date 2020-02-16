@@ -23,5 +23,7 @@ public interface Store<T> {
 
     void dispatch(Action action);
 
+    void dispatch(T newState);
+
     StoreSubscription subscribe(StoreSubscriber<T> subscriber);
 }

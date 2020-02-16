@@ -17,6 +17,7 @@
 package com.overstreamapp.websocket.client.netty;
 
 import com.bunjlabs.fuga.inject.Inject;
+import com.overstreamapp.network.ConnectionRegistry;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.websocket.WebSocketHandler;
 import com.overstreamapp.websocket.client.WebSocketClient;
@@ -35,11 +36,13 @@ import java.net.URI;
 public class NettyWebSocketClient implements WebSocketClient {
     private final Logger logger;
     private final EventLoopGroupManager loopGroupManager;
+    private final ConnectionRegistry connectionRegistry;
 
     @Inject
-    public NettyWebSocketClient(Logger logger, EventLoopGroupManager loopGroupManager) {
+    public NettyWebSocketClient(Logger logger, EventLoopGroupManager loopGroupManager, ConnectionRegistry connectionRegistry) {
         this.logger = logger;
         this.loopGroupManager = loopGroupManager;
+        this.connectionRegistry = connectionRegistry;
     }
 
 
@@ -66,7 +69,7 @@ public class NettyWebSocketClient implements WebSocketClient {
         b.group(workerGroup)
                 .channel(NioSocketChannel.class)
                 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, timeout)
-                .handler(new NettyWebSocketClientInitializer(uri, sslContext, handler));
+                .handler(new NettyWebSocketClientInitializer(uri, sslContext, connectionRegistry, handler));
 
         b.connect(uri.getHost(), uri.getPort()).addListener(future -> {
             if (!future.isSuccess()) {

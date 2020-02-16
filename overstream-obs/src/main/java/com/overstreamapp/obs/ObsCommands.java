@@ -17,9 +17,7 @@
 package com.overstreamapp.obs;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
-
-import java.util.Map;
+import com.overstreamapp.shell.CommandRegistry;
 
 public class ObsCommands {
 
@@ -33,28 +31,28 @@ public class ObsCommands {
     }
 
     void registerCommands() {
-        commandRegistry.builder("obs.state").command(this::state).build();
-        commandRegistry.builder("obs.connect").command(this::connect).build();
-        commandRegistry.builder("obs.disconnect").command(this::disconnect).build();
-        commandRegistry.builder("obs.reconnect").command(this::reconnect).build();
+        commandRegistry.builder("obs.state").function(this::state).build();
+        commandRegistry.builder("obs.connect").function(this::connect).build();
+        commandRegistry.builder("obs.disconnect").function(this::disconnect).build();
+        commandRegistry.builder("obs.reconnect").function(this::reconnect).build();
     }
 
-    private String state(Map<String, Object> parameters) {
+    private String state() {
         return "OBS: " + obs.getConnectionState().name();
     }
 
-    private String connect(Map<String, Object> parameters) {
+    private String connect() {
         obs.connect();
-        return "OK";
+        return "ok";
     }
 
-    private String disconnect(Map<String, Object> parameters) {
+    private String disconnect() {
         obs.disconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String reconnect(Map<String, Object> parameters) {
+    private String reconnect() {
         obs.reconnect();
-        return "OK";
+        return "ok";
     }
 }

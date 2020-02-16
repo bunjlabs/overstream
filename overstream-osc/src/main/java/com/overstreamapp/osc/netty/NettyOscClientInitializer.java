@@ -16,14 +16,17 @@
 
 package com.overstreamapp.osc.netty;
 
+import com.overstreamapp.network.ConnectionRegistry;
 import com.overstreamapp.osc.OscHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.DatagramChannel;
 
 public class NettyOscClientInitializer extends ChannelInitializer<DatagramChannel> {
+    private final ConnectionRegistry connectionRegistry;
     private final OscHandler oscHandler;
 
-    NettyOscClientInitializer(OscHandler oscHandler) {
+    NettyOscClientInitializer(ConnectionRegistry connectionRegistry, OscHandler oscHandler) {
+        this.connectionRegistry = connectionRegistry;
         this.oscHandler = oscHandler;
     }
 
@@ -32,5 +35,6 @@ public class NettyOscClientInitializer extends ChannelInitializer<DatagramChanne
         ch.pipeline().addLast(new NettyOscCodec());
         ch.pipeline().addLast(new NettyOscClientHandler(oscHandler));
 
+        connectionRegistry.pushChannel(ch);
     }
 }

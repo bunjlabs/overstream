@@ -3,11 +3,11 @@ plugins {
 }
 
 dependencies {
-    api 'com.bunjlabs.fuga:fuga-common:0.8-SNAPSHOT'
-    api 'com.bunjlabs.fuga:fuga-context:0.8-SNAPSHOT'
-    api 'com.bunjlabs.fuga:fuga-inject:0.8-SNAPSHOT'
-    api 'com.bunjlabs.fuga:fuga-settings:0.8-SNAPSHOT'
-    api 'com.bunjlabs.fuga:fuga-logging:0.8-SNAPSHOT'
+    api 'com.bunjlabs.fuga:fuga-common:0.8.1'
+    api 'com.bunjlabs.fuga:fuga-context:0.8.1'
+    api 'com.bunjlabs.fuga:fuga-inject:0.8.1'
+    api 'com.bunjlabs.fuga:fuga-settings:0.8.1'
+    api 'com.bunjlabs.fuga:fuga-logging:0.8.1'
     api 'org.slf4j:slf4j-api:1.7.26'
     api 'io.netty:netty-all:4.1.41.Final'
     api 'org.mongodb:mongo-java-driver:3.12.0'

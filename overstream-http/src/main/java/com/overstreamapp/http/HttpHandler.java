@@ -14,15 +14,13 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands;
+package com.overstreamapp.http;
 
-import java.util.Map;
+import io.netty.handler.codec.http.FullHttpResponse;
 
-public interface CommandRegistry {
+public interface HttpHandler {
 
-    CommandBuilder builder(String... aliases);
+    void onResponse(FullHttpResponse response);
 
-    String executeFlat(String command);
-
-    String execute(String name, Map<String, Object> parameters);
+    void onError(Throwable cause);
 }

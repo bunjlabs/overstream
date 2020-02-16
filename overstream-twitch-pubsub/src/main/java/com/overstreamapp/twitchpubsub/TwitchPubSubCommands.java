@@ -17,9 +17,7 @@
 package com.overstreamapp.twitchpubsub;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
-
-import java.util.Map;
+import com.overstreamapp.shell.CommandRegistry;
 
 public class TwitchPubSubCommands {
 
@@ -33,28 +31,28 @@ public class TwitchPubSubCommands {
     }
 
     void registerCommands() {
-        commandRegistry.builder("twitchpubsub.state").command(this::state).build();
-        commandRegistry.builder("twitchpubsub.connect").command(this::connect).build();
-        commandRegistry.builder("twitchpubsub.disconnect").command(this::disconnect).build();
-        commandRegistry.builder("twitchpubsub.reconnect").command(this::reconnect).build();
+        commandRegistry.builder("twitchpubsub.state").function(this::state).build();
+        commandRegistry.builder("twitchpubsub.connect").function(this::connect).build();
+        commandRegistry.builder("twitchpubsub.disconnect").function(this::disconnect).build();
+        commandRegistry.builder("twitchpubsub.reconnect").function(this::reconnect).build();
     }
 
-    private String state(Map<String, Object> parameters) {
+    private String state() {
         return "TwitchPubSub: " + twitch.getConnectionState().name();
     }
 
-    private String connect(Map<String, Object> parameters) {
+    private String connect() {
         twitch.connect();
-        return "OK";
+        return "ok";
     }
 
-    private String disconnect(Map<String, Object> parameters) {
+    private String disconnect() {
         twitch.disconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String reconnect(Map<String, Object> parameters) {
+    private String reconnect() {
         twitch.reconnect();
-        return "OK";
+        return "ok";
     }
 }

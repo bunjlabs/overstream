@@ -33,15 +33,15 @@ class ConnectionPoint {
         this.ssl = ssl;
     }
 
-    public String getHost() {
+    String getHost() {
         return host;
     }
 
-    public int getPort() {
+    int getPort() {
         return port;
     }
 
-    public boolean isSsl() {
+    boolean isSsl() {
         return ssl;
     }
 
@@ -58,5 +58,10 @@ class ConnectionPoint {
     @Override
     public int hashCode() {
         return Objects.hash(host, port, ssl);
+    }
+
+    @Override
+    public String toString() {
+        return String.format("%s:%d ssl:%b", host, port, ssl);
     }
 }

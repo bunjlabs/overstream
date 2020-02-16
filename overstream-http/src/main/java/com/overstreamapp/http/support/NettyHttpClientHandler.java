@@ -18,11 +18,40 @@ package com.overstreamapp.http.support;
 
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
-import io.netty.handler.codec.http.HttpObject;
+import io.netty.handler.codec.http.FullHttpResponse;
+import org.slf4j.Logger;
 
-public class NettyHttpClientHandler extends SimpleChannelInboundHandler<HttpObject> {
+class NettyHttpClientHandler extends SimpleChannelInboundHandler<FullHttpResponse> {
+
+    private final Logger logger;
+    private final NettyHttpConnection connection;
+
+    NettyHttpClientHandler(Logger logger, NettyHttpConnection connection) {
+        this.logger = logger;
+        this.connection = connection;
+    }
+
     @Override
-    protected void channelRead0(ChannelHandlerContext ctx, HttpObject msg) throws Exception {
-        System.out.println("Call");
+    protected void channelRead0(ChannelHandlerContext ctx, FullHttpResponse response) {
+        var context = connection.getCurrentContext();
+
+        logger.trace("Response {} for {}", response.status(), context.getConnectionPoint());
+
+        context.getHandler().onResponse(response);
+
+        connection.processOne();
+    }
+
+    @Override
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+        super.exceptionCaught(ctx, cause);
+
+        var context = connection.getCurrentContext();
+
+        logger.trace("Error {} for {}", cause, context.getConnectionPoint());
+
+        context.getHandler().onError(cause);
+
+        connection.processOne();
     }
 }

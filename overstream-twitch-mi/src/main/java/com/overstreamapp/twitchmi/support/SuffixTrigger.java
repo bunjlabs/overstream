@@ -14,7 +14,21 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.http;
+package com.overstreamapp.twitchmi.support;
 
-public interface HttpResponse {
+import com.overstreamapp.twitchmi.domain.ChatMessage;
+
+import java.util.Set;
+import java.util.function.Consumer;
+
+class SuffixTrigger extends AbstractTrigger {
+
+    SuffixTrigger(DefaultTwitchMi twitchMi, Set<String> aliases, Consumer<ChatMessage> consumer) {
+        super(twitchMi, aliases, consumer);
+    }
+
+    @Override
+    boolean check(String message) {
+        return aliases.stream().anyMatch(message::endsWith);
+    }
 }

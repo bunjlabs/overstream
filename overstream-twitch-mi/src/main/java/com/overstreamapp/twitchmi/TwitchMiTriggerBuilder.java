@@ -16,27 +16,20 @@
 
 package com.overstreamapp.twitchmi;
 
-public interface TwitchMi {
-    void connect();
 
-    void disconnect();
+import com.overstreamapp.twitchmi.domain.ChatMessage;
 
-    void reconnect();
+import java.util.function.Consumer;
 
-    TwitchMiTriggerBuilder createTrigger(String... aliases);
+public interface TwitchMiTriggerBuilder {
 
-    TwitchMiTriggerBuilder createTrigger(Iterable<String> aliases);
+    TwitchMiTriggerBuilder alias(String... aliases);
 
-    TwitchMiConnectionState getConnectionState();
+    TwitchMiTriggerBuilder alias(Iterable<String> aliases);
 
-    void joinChannel(String channelName);
+    TwitchMiTriggerBuilder mode(TwitchMiTriggerMode mode);
 
-    void leaveChannel(String channelName);
+    TwitchMiTriggerBuilder consumer(Consumer<ChatMessage> consumer);
 
-    void sendMessage(String message);
-
-    void sendMessage(String channel, String message);
-
-    void sendPrivateMessage(String targetUser, String message);
-
+    TwitchMiTrigger build();
 }

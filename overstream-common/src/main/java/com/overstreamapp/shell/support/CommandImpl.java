@@ -14,21 +14,22 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.support;
+package com.overstreamapp.shell.support;
 
-import com.overstreamapp.commands.Command;
+import com.overstreamapp.shell.Command;
+import com.overstreamapp.shell.CommandFunction;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 
 class CommandImpl implements Command {
-    private final Function<Map<String, Object>, String> function;
     private final Set<String> aliases;
+    private final CommandFunction function;
 
-    CommandImpl(Function<Map<String, Object>, String> function, Set<String> aliases) {
-        this.function = function;
+    CommandImpl(Set<String> aliases, CommandFunction function) {
         this.aliases = aliases;
+        this.function = function;
     }
 
     @Override
@@ -37,9 +38,9 @@ class CommandImpl implements Command {
     }
 
     @Override
-    public String execute(Map<String, Object> parameters) {
+    public Object execute(List<Object> arguments, Map<String, Object> namedArguments) {
         try {
-            return function.apply(parameters);
+            return function.execute(arguments, namedArguments);
         } catch (Throwable t) {
             return "Error: " + t.getMessage();
         }

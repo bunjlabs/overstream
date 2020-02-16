@@ -14,18 +14,20 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.support;
+package com.overstreamapp.shell.support;
 
-import com.overstreamapp.commands.Command;
-import com.overstreamapp.commands.CommandBuilder;
+import com.overstreamapp.shell.Command;
+import com.overstreamapp.shell.CommandBuilder;
+import com.overstreamapp.shell.CommandFunction;
 
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 class DefaultCommandBuilder implements CommandBuilder {
     private final DefaultCommandRegistry commandRegistry;
     private final Set<String> aliases = new HashSet<>();
-    private Function<Map<String, Object>, String> function;
+    private CommandFunction function;
 
     DefaultCommandBuilder(DefaultCommandRegistry commandRegistry, String... aliases) {
         this.commandRegistry = commandRegistry;
@@ -45,14 +47,26 @@ class DefaultCommandBuilder implements CommandBuilder {
     }
 
     @Override
-    public CommandBuilder command(Function<Map<String, Object>, String> function) {
+    public CommandBuilder function(CommandFunction function) {
         this.function = function;
         return this;
     }
 
     @Override
+    public CommandBuilder function(Function<List<Object>, Object> function) {
+        this.function = (a, n) -> function.apply(a);
+        return this;
+    }
+
+    @Override
+    public CommandBuilder function(Supplier<Object> function) {
+        this.function = (a, n) -> function.get();
+        return this;
+    }
+
+    @Override
     public Command build() {
-        var command = new CommandImpl(function, aliases);
+        var command = new CommandImpl(aliases, function);
         commandRegistry.register(command);
         return command;
     }

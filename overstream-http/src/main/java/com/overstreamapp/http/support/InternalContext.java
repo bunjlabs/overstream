@@ -16,11 +16,36 @@
 
 package com.overstreamapp.http.support;
 
-public class InternalContext {
+import com.overstreamapp.http.HttpHandler;
+import io.netty.handler.codec.http.FullHttpRequest;
 
-    private final InternalHttpRequest request;
+class InternalContext {
 
-    public InternalContext(InternalHttpRequest request) {
+    private final AbstractHttpClient client;
+    private final ConnectionPoint connectionPoint;
+    private final FullHttpRequest request;
+    private final HttpHandler handler;
+
+    InternalContext(AbstractHttpClient client, ConnectionPoint connectionPoint, FullHttpRequest request, HttpHandler handler) {
+        this.client = client;
+        this.connectionPoint = connectionPoint;
         this.request = request;
+        this.handler = handler;
+    }
+
+    AbstractHttpClient getClient() {
+        return client;
+    }
+
+    ConnectionPoint getConnectionPoint() {
+        return connectionPoint;
+    }
+
+    FullHttpRequest getRequest() {
+        return request;
+    }
+
+    HttpHandler getHandler() {
+        return handler;
     }
 }

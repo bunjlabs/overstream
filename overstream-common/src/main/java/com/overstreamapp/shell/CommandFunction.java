@@ -14,29 +14,13 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.twitchmi;
+package com.overstreamapp.shell;
 
-public interface TwitchMi {
-    void connect();
+import java.util.List;
+import java.util.Map;
 
-    void disconnect();
+@FunctionalInterface
+public interface CommandFunction {
 
-    void reconnect();
-
-    TwitchMiTriggerBuilder createTrigger(String... aliases);
-
-    TwitchMiTriggerBuilder createTrigger(Iterable<String> aliases);
-
-    TwitchMiConnectionState getConnectionState();
-
-    void joinChannel(String channelName);
-
-    void leaveChannel(String channelName);
-
-    void sendMessage(String message);
-
-    void sendMessage(String channel, String message);
-
-    void sendPrivateMessage(String targetUser, String message);
-
+    Object execute(List<Object> arguments, Map<String, Object> namedArguments);
 }

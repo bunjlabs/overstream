@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.parser;
+package com.overstreamapp.shell;
 
-public class CommandParserException extends Exception {
-    private final int column;
-    private final String value;
+import com.bunjlabs.fuga.inject.Configuration;
+import com.bunjlabs.fuga.inject.Singleton;
+import com.bunjlabs.fuga.inject.Unit;
+import com.overstreamapp.shell.support.DefaultCommandRegistry;
 
-    CommandParserException(Lexer lexer, String message) {
-        super(message);
-        this.column = lexer.getColumn();
-        this.value = lexer.getValue();
-    }
+public class CommandRegistryUnit implements Unit {
 
-    public int getColumn() {
-        return column;
-    }
-
-    public String getValue() {
-        return value;
+    @Override
+    public void setup(Configuration c) {
+        c.bind(DefaultCommandRegistry.class).auto().in(Singleton.class);
+        c.bind(CommandRegistry.class).to(DefaultCommandRegistry.class);
     }
 }

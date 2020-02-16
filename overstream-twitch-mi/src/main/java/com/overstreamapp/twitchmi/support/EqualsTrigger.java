@@ -14,18 +14,21 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands;
+package com.overstreamapp.twitchmi.support;
 
-import com.bunjlabs.fuga.inject.Configuration;
-import com.bunjlabs.fuga.inject.Singleton;
-import com.bunjlabs.fuga.inject.Unit;
-import com.overstreamapp.commands.support.DefaultCommandRegistry;
+import com.overstreamapp.twitchmi.domain.ChatMessage;
 
-public class CommandRegistryUnit implements Unit {
+import java.util.Set;
+import java.util.function.Consumer;
+
+class EqualsTrigger extends AbstractTrigger {
+
+    EqualsTrigger(DefaultTwitchMi twitchMi, Set<String> aliases, Consumer<ChatMessage> consumer) {
+        super(twitchMi, aliases, consumer);
+    }
 
     @Override
-    public void setup(Configuration c) {
-        c.bind(DefaultCommandRegistry.class).auto().in(Singleton.class);
-        c.bind(CommandRegistry.class).to(DefaultCommandRegistry.class);
+    boolean check(String message) {
+        return aliases.stream().anyMatch(message::equalsIgnoreCase);
     }
 }

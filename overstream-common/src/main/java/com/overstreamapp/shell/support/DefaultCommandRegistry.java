@@ -14,16 +14,14 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands.support;
+package com.overstreamapp.shell.support;
 
 import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.AppInfo;
-import com.overstreamapp.commands.Command;
-import com.overstreamapp.commands.CommandBuilder;
-import com.overstreamapp.commands.CommandRegistry;
-import com.overstreamapp.commands.event.CommandEvent;
-import com.overstreamapp.commands.parser.CommandParser;
-import com.overstreamapp.commands.parser.CommandParserException;
+import com.overstreamapp.shell.Command;
+import com.overstreamapp.shell.CommandBuilder;
+import com.overstreamapp.shell.CommandRegistry;
+import com.overstreamapp.shell.event.CommandEvent;
 import com.overstreamapp.event.Event;
 import com.overstreamapp.event.EventKeeper;
 import org.slf4j.Logger;
@@ -44,10 +42,10 @@ public class DefaultCommandRegistry implements CommandRegistry {
         this.logger = logger;
         this.commandEvent = eventKeeper.eventBuilder(CommandEvent.class).build();
 
-        builder("help", "list").command(p -> "List of available commands:\n" + String.join("\n", listCommands())).build();
-        builder("version").command(p -> appInfo.name() + "-" + appInfo.version()).build();
-        builder("echo").command(p -> p.getOrDefault("text", "").toString()).build();
-        builder("nop").command(p -> "").build();
+        builder("help", "list").function(() -> "List of available commands:\n" + String.join("\n", listCommands())).build();
+        builder("version").function(() -> appInfo.name() + "-" + appInfo.version()).build();
+        builder("echo").function(a -> a.stream().map(Object::toString).collect(Collectors.joining(" "))).build();
+        builder("nop").function(() -> "").build();
     }
 
     @Override
@@ -56,21 +54,21 @@ public class DefaultCommandRegistry implements CommandRegistry {
     }
 
     @Override
-    public String executeFlat(String fullCommand) {
+    public Object executeFlat(String fullCommand) {
         if (fullCommand.isBlank()) {
             return null;
         }
         try {
-            var commandRequest = commandParser.parse(fullCommand);
+            var request = commandParser.parse(fullCommand);
 
-            return execute(commandRequest.getCommand(), commandRequest.getParams());
+            return execute(request.getCommand(), request.getArguments(), request.getNamedArguments());
         } catch (CommandParserException e) {
             return " ".repeat(e.getColumn() - 1) + "^\nError: " + e.getLocalizedMessage();
         }
     }
 
     @Override
-    public String execute(String name, Map<String, Object> parameters) {
+    public Object execute(String name, List<Object> arguments, Map<String, Object> namedArguments) {
         var command = commands.get(name);
 
         if (command == null) {
@@ -78,17 +76,17 @@ public class DefaultCommandRegistry implements CommandRegistry {
             return "Error: " + name + " not found";
         }
 
-        String result;
+        Object result;
 
         try {
-            logger.info("Execute command: {} {}", name, parameters);
-            result = command.execute(parameters);
+            logger.info("Execute command: {} {} {}", name, arguments, namedArguments);
+            result = command.execute(arguments, namedArguments);
         } catch (Throwable t) {
             logger.debug("Error while executing command", t);
             result = "Error:" + t.getMessage();
         }
 
-        commandEvent.fire(new CommandEvent(name, parameters, result));
+        commandEvent.fire(new CommandEvent(name, arguments, namedArguments, result));
 
         return result;
     }

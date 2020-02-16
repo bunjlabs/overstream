@@ -16,6 +16,7 @@
 
 package com.overstreamapp.websocket.client.netty;
 
+import com.overstreamapp.network.ConnectionRegistry;
 import com.overstreamapp.websocket.WebSocketHandler;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -29,19 +30,21 @@ import io.netty.handler.ssl.SslContext;
 
 import java.net.URI;
 
-public class NettyWebSocketClientInitializer extends ChannelInitializer<SocketChannel> {
+class NettyWebSocketClientInitializer extends ChannelInitializer<SocketChannel> {
     private final URI uri;
     private final SslContext sslContext;
+    private final ConnectionRegistry connectionRegistry;
     private final WebSocketHandler handler;
 
-    public NettyWebSocketClientInitializer(URI uri, SslContext sslContext, WebSocketHandler handler) {
+    NettyWebSocketClientInitializer(URI uri, SslContext sslContext, ConnectionRegistry connectionRegistry, WebSocketHandler handler) {
         this.uri = uri;
         this.sslContext = sslContext;
+        this.connectionRegistry = connectionRegistry;
         this.handler = handler;
     }
 
     @Override
-    protected void initChannel(SocketChannel ch) throws Exception {
+    protected void initChannel(SocketChannel ch)  {
         NettyWebSocketClientHandler nettyHandler = new NettyWebSocketClientHandler(
                 uri, WebSocketClientHandshakerFactory.newHandshaker(
                 uri, WebSocketVersion.V13, null, false,
@@ -57,5 +60,6 @@ public class NettyWebSocketClientInitializer extends ChannelInitializer<SocketCh
         pipeline.addLast(new HttpObjectAggregator(65536));
         pipeline.addLast(nettyHandler);
 
+        connectionRegistry.pushChannel(ch);
     }
 }

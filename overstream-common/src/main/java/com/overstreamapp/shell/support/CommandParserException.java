@@ -14,18 +14,23 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.commands;
+package com.overstreamapp.shell.support;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.function.Function;
+class CommandParserException extends Exception {
+    private final int column;
+    private final String value;
 
-public interface CommandBuilder {
-    CommandBuilder alias(String... name);
+    CommandParserException(Lexer lexer, String message) {
+        super(message);
+        this.column = lexer.getColumn();
+        this.value = lexer.getValue();
+    }
 
-    CommandBuilder alias(Collection<String> names);
+    public int getColumn() {
+        return column;
+    }
 
-    CommandBuilder command(Function<Map<String, Object>, String> consumer);
-
-    Command build();
+    public String getValue() {
+        return value;
+    }
 }

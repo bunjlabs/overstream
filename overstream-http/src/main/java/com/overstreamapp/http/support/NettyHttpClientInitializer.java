@@ -20,12 +20,18 @@ import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
 import io.netty.handler.codec.http.HttpContentDecompressor;
+import io.netty.handler.codec.http.HttpObjectAggregator;
 import io.netty.handler.ssl.SslContext;
+import org.slf4j.Logger;
 
 class NettyHttpClientInitializer extends ChannelInitializer<SocketChannel> {
+    private final Logger logger;
+    private final NettyHttpConnection connection;
     private final SslContext sslContext;
 
-    NettyHttpClientInitializer(SslContext sslContext) {
+    NettyHttpClientInitializer(Logger logger, NettyHttpConnection connection, SslContext sslContext) {
+        this.logger = logger;
+        this.connection = connection;
         this.sslContext = sslContext;
     }
 
@@ -38,6 +44,7 @@ class NettyHttpClientInitializer extends ChannelInitializer<SocketChannel> {
 
         p.addLast(new HttpClientCodec());
         p.addLast(new HttpContentDecompressor());
-        p.addLast(new NettyHttpClientHandler());
+        p.addLast(new HttpObjectAggregator(32 * 1024));
+        p.addLast(new NettyHttpClientHandler(logger, connection));
     }
 }

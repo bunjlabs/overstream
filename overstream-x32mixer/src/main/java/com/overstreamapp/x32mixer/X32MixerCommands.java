@@ -17,13 +17,13 @@
 package com.overstreamapp.x32mixer;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
+import com.overstreamapp.shell.CommandRegistry;
 import com.overstreamapp.store.Store;
 import com.overstreamapp.store.StoreKeeper;
 import com.overstreamapp.x32mixer.state.X32ChannelGate;
 import com.overstreamapp.x32mixer.state.X32ChannelOn;
 
-import java.util.Map;
+import java.util.List;
 
 public class X32MixerCommands {
 
@@ -44,41 +44,47 @@ public class X32MixerCommands {
     }
 
     void registerCommands() {
-        commandRegistry.builder("x32.channel.on").command(this::channelOn).build();
-        commandRegistry.builder("x32.bus.on").command(this::busOn).build();
-        commandRegistry.builder("x32.state").command(this::state).build();
+        commandRegistry.builder("x32.channel.on").function(this::channelOn).build();
+        commandRegistry.builder("x32.bus.on").function(this::busOn).build();
+        commandRegistry.builder("x32.state").function(this::state).build();
     }
 
-    private String channelOn(Map<String, Object> parameters) {
-        if (parameters.containsKey("ch") && parameters.containsKey("on")) {
-            mixer.channelOn((int) parameters.get("ch"), (boolean) parameters.get("on"));
-            return "OK";
-        } else {
-            return "parameter ch and on is required";
+    private String channelOn(List<Object> arguments) {
+        if (arguments.size() < 2) {
+            return "using: ch on";
         }
+
+        var ch = (int) arguments.get(0);
+        var on = (boolean) arguments.get(1);
+
+        mixer.channelOn(ch, on);
+        return String.format("channel %02d is %s", ch, on ? "on" : "off");
     }
 
-    private String busOn(Map<String, Object> parameters) {
-        if (parameters.containsKey("bus") && parameters.containsKey("on")) {
-            mixer.busOn((int) parameters.get("bus"), (boolean) parameters.get("on"));
-            return "OK";
-        } else {
-            return "parameter bus and on is required";
+    private String busOn(List<Object> arguments) {
+        if (arguments.size() < 2) {
+            return "using: bus on";
         }
+
+        var bus = (int) arguments.get(0);
+        var on = (boolean) arguments.get(1);
+
+        mixer.busOn(bus, on);
+        return String.format("bus %02d is %s", bus, on ? "on" : "off");
     }
 
-    private String state(Map<String, Object> parameters) {
+    private String state() {
         var channelOn = channelOnStore.getState().getChannels();
         var channelGate = channelGateStore.getState().getChannels();
 
         var sb = new StringBuilder("\n");
-        sb.append("CHANNELS:");
+        sb.append("Channels:");
         for (int i = 0; i < 32; i++) sb.append(String.format(" %02d", i + 1));
         sb.append('\n');
-        sb.append("   CH ON:");
+        sb.append("      On:");
         for (int i = 0; i < 32; i++) sb.append(String.format(" %s", channelOn[i] ? "+" : " "));
         sb.append('\n');
-        sb.append(" CH GATE:");
+        sb.append("    Gate:");
         for (int i = 0; i < 32; i++) sb.append(String.format(" %s", channelGate[i] ? "+" : " "));
 
         return sb.toString();

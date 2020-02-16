@@ -20,16 +20,22 @@ import com.bunjlabs.fuga.inject.Inject;
 import com.overstreamapp.network.EventLoopGroupManager;
 import com.overstreamapp.store.Store;
 import com.overstreamapp.store.StoreKeeper;
-import com.overstreamapp.store.ValueAction;
 import com.overstreamapp.twitchmi.TwitchMiSettings;
+import com.overstreamapp.twitchmi.TwitchMiTriggerBuilder;
 import com.overstreamapp.twitchmi.domain.ChatMessage;
 import com.overstreamapp.twitchmi.state.TwitchChat;
 import com.overstreamapp.websocket.client.WebSocketClient;
 import org.slf4j.Logger;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class DefaultTwitchMi extends AbstractTwitchMi {
     private final Logger logger;
     private final Store<TwitchChat> twitchChatState;
+    private final Map<Set<String>, AbstractTrigger> triggers = new ConcurrentHashMap<>();
 
     @Inject
     public DefaultTwitchMi(Logger logger, TwitchMiSettings settings, EventLoopGroupManager loopGroupManager, WebSocketClient webSocketClient, StoreKeeper storeKeeper) {
@@ -39,12 +45,39 @@ public class DefaultTwitchMi extends AbstractTwitchMi {
     }
 
     @Override
+    public TwitchMiTriggerBuilder createTrigger(String... aliases) {
+        return new DefaultTwitchMiTriggerBuilder(this, Arrays.asList(aliases));
+    }
+
+    @Override
+    public TwitchMiTriggerBuilder createTrigger(Iterable<String> aliases) {
+        return new DefaultTwitchMiTriggerBuilder(this, aliases);
+    }
+
+    @Override
     void onChatMessage(ChatMessage message) {
         logger.debug("Chat Message: [{}] {} : {}",
                 message.getChannelName(),
                 message.getUserName(),
                 message.getText());
 
-        twitchChatState.dispatch(new ValueAction(new TwitchChat(message)));
+        twitchChatState.dispatch(new TwitchChat(message));
+        processTriggers(message);
+    }
+
+    Logger getLogger() {
+        return logger;
+    }
+
+    void registerChatTrigger(Set<String> aliases, AbstractTrigger trigger) {
+        triggers.put(aliases, trigger);
+    }
+
+    void unregisterChatTrigger(Set<String> aliases) {
+        triggers.remove(aliases);
+    }
+
+    private void processTriggers(ChatMessage message) {
+        triggers.values().forEach(trigger -> trigger.trigger(message));
     }
 }

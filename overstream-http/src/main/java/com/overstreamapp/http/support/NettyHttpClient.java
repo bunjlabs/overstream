@@ -17,67 +17,40 @@
 package com.overstreamapp.http.support;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.http.HttpClient;
-import com.overstreamapp.http.HttpMethod;
-import com.overstreamapp.http.HttpRequestBuilder;
+import com.overstreamapp.http.*;
 import com.overstreamapp.network.EventLoopGroupManager;
+import io.netty.handler.codec.http.FullHttpRequest;
 import org.slf4j.Logger;
 
-import java.net.URL;
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class NettyHttpClient implements HttpClient {
-    private final Map<ConnectionPoint, NettyHttpConnection> connectionPool = new HashMap<>();
+public class NettyHttpClient extends AbstractHttpClient {
 
     private final Logger logger;
     private final EventLoopGroupManager loopGroupManager;
+    private final Map<ConnectionPoint, NettyHttpConnection> connectionPool;
 
     @Inject
     public NettyHttpClient(Logger logger, EventLoopGroupManager loopGroupManager) {
         this.logger = logger;
         this.loopGroupManager = loopGroupManager;
+        this.connectionPool = new ConcurrentHashMap<>();
     }
 
     @Override
-    public HttpRequestBuilder get(URL url) {
-        return createBuilder(HttpMethod.GET, url);
+    void execute(ConnectionPoint connectionPoint, FullHttpRequest request, HttpHandler handler) {
+        var context = new InternalContext(this, connectionPoint, request, handler);
+        var connection = getConnection(connectionPoint);
+
+        connection.execute(context);
     }
 
-    @Override
-    public HttpRequestBuilder head(URL url) {
-        return createBuilder(HttpMethod.HEAD, url);
-    }
-
-    @Override
-    public HttpRequestBuilder put(URL url) {
-        return createBuilder(HttpMethod.PUT, url);
-    }
-
-    @Override
-    public HttpRequestBuilder post(URL url) {
-        return createBuilder(HttpMethod.POST, url);
-    }
-
-    @Override
-    public HttpRequestBuilder delete(URL url) {
-        return createBuilder(HttpMethod.DELETE, url);
-    }
-
-    @Override
-    public HttpRequestBuilder options(URL url) {
-        return createBuilder(HttpMethod.OPTIONS, url);
-    }
-
-    private HttpRequestBuilder createBuilder(HttpMethod method, URL url) {
-        return new NettyHttpRequestBuilder(method, url, this);
-    }
-
-    NettyHttpConnection getConnection(ConnectionPoint connectionPoint) {
+    private NettyHttpConnection getConnection(ConnectionPoint connectionPoint) {
         var connection = connectionPool.get(connectionPoint);
 
         if (connection == null) {
-            connection = new NettyHttpConnection(logger, this, loopGroupManager.getWorkerEventLoopGroup(), connectionPoint);
+            connection = new NettyHttpConnection(logger, loopGroupManager.getWorkerEventLoopGroup(), connectionPoint);
             connectionPool.put(connectionPoint, connection);
         }
 

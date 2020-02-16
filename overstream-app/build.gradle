@@ -34,6 +34,6 @@ dependencies {
     implementation project(":overstream-twitch-pubsub")
     implementation project(":overstream-streamlabs-socket")
     implementation project(":overstream-obs")
-    implementation 'com.bunjlabs.fuga:fuga-context:0.8-SNAPSHOT'
+    implementation 'com.bunjlabs.fuga:fuga-context:0.8.1'
     implementation 'ch.qos.logback:logback-classic:1.2.3'
 }

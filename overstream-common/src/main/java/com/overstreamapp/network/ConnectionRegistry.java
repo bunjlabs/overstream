@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.http;
+package com.overstreamapp.network;
 
-import java.net.URI;
-import java.util.Map;
+import io.netty.channel.Channel;
 
-public interface HttpRequest {
+import java.util.List;
 
-    HttpMethod getMethod();
+public interface ConnectionRegistry {
 
-    URI getUri();
+    void pushChannel(Channel channel);
 
-    Map<String, String> getHeaders();
+    List<Channel> getSnapshot();
 }

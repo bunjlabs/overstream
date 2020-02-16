@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.twitchmi;
+package com.overstreamapp.shell;
 
-public interface TwitchMi {
-    void connect();
+import groovy.lang.Closure;
 
-    void disconnect();
+public class CommandBuilderGroovyExtension {
 
-    void reconnect();
-
-    TwitchMiTriggerBuilder createTrigger(String... aliases);
-
-    TwitchMiTriggerBuilder createTrigger(Iterable<String> aliases);
-
-    TwitchMiConnectionState getConnectionState();
-
-    void joinChannel(String channelName);
-
-    void leaveChannel(String channelName);
-
-    void sendMessage(String message);
-
-    void sendMessage(String channel, String message);
-
-    void sendPrivateMessage(String targetUser, String message);
-
+    public static CommandBuilder function(final CommandBuilder self, Closure c) {
+        switch (c.getMaximumNumberOfParameters()) {
+            case 0:
+                self.function(() -> c.call());
+                break;
+            case 1:
+                self.function((a) -> c.call(a));
+                break;
+            default:
+                self.function((a, n) -> c.call(a, n));
+                break;
+        }
+        return self;
+    }
 }

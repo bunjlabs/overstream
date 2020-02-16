@@ -17,13 +17,11 @@
 package com.overstreamapp.ympd;
 
 import com.bunjlabs.fuga.inject.Inject;
-import com.overstreamapp.commands.CommandRegistry;
+import com.overstreamapp.shell.CommandRegistry;
 import com.overstreamapp.store.Store;
 import com.overstreamapp.store.StoreKeeper;
 import com.overstreamapp.ympd.state.PlayerSong;
 import com.overstreamapp.ympd.state.PlayerState;
-
-import java.util.Map;
 
 public class YmpdCommands {
 
@@ -43,65 +41,62 @@ public class YmpdCommands {
     }
 
     void registerCommands() {
-        commandRegistry.builder("ympd.state").command(this::state).build();
-        commandRegistry.builder("ympd.connect").command(this::connect).build();
-        commandRegistry.builder("ympd.disconnect").command(this::disconnect).build();
-        commandRegistry.builder("ympd.reconnect").command(this::reconnect).build();
+        commandRegistry.builder("ympd.state").function(this::state).build();
+        commandRegistry.builder("ympd.connect").function(this::connect).build();
+        commandRegistry.builder("ympd.disconnect").function(this::disconnect).build();
+        commandRegistry.builder("ympd.reconnect").function(this::reconnect).build();
 
-        commandRegistry.builder("ympd.play").command(this::play).build();
-        commandRegistry.builder("ympd.pause").command(this::pause).build();
-        commandRegistry.builder("ympd.next").command(this::next).build();
-        commandRegistry.builder("ympd.prev").command(this::prev).build();
-        commandRegistry.builder("ympd.song", "ympd.current").command(this::song).build();
+        commandRegistry.builder("ympd.play").function(this::play).build();
+        commandRegistry.builder("ympd.pause").function(this::pause).build();
+        commandRegistry.builder("ympd.next").function(this::next).build();
+        commandRegistry.builder("ympd.prev").function(this::prev).build();
+        commandRegistry.builder("ympd.song", "ympd.current").function(this::song).build();
     }
 
-    private String state(Map<String, Object> parameters) {
+    private String state() {
         return "YMPD: " + ympd.getConnectionState().name();
     }
 
-    private String connect(Map<String, Object> parameters) {
+    private String connect() {
         ympd.connect();
-        return "OK";
+        return "ok";
     }
 
-    private String disconnect(Map<String, Object> parameters) {
+    private String disconnect() {
         ympd.disconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String reconnect(Map<String, Object> parameters) {
+    private String reconnect() {
         ympd.reconnect();
-        return "OK";
+        return "ok";
     }
 
-    private String play(Map<String, Object> p) {
+    private String play() {
         ympd.play();
-        return "OK";
+        return "ok";
     }
 
-    private String pause(Map<String, Object> p) {
+    private String pause() {
         ympd.pause();
-        return "OK";
+        return "ok";
     }
 
-    private String next(Map<String, Object> p) {
+    private String next() {
         ympd.next();
-        return "OK";
+        return "ok";
     }
 
-    private String prev(Map<String, Object> p) {
+    private String prev() {
         ympd.prev();
-        return "OK";
+        return "ok";
     }
 
-    private String song(Map<String, Object> p) {
+    private String song() {
         var song = songStore.getState();
         var state = stateStore.getState();
         return String.format("%s by %s (state: %d, time %d:%d)",
-                song.getTitle(),
-                song.getArtist(),
-                state.getState(),
-                state.getElapsedTime(),
-                state.getTotalTime());
+                song.getTitle(), song.getArtist(), state.getState(),
+                state.getElapsedTime(), state.getTotalTime());
     }
 }

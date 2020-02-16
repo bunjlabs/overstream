@@ -16,6 +16,7 @@
 
 package com.overstreamapp.websocket.server.netty;
 
+import com.overstreamapp.network.ConnectionRegistry;
 import com.overstreamapp.websocket.server.WebSocketHandlerFactory;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
@@ -27,9 +28,11 @@ import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketSe
 public class NettyWebSocketServerInitializer extends ChannelInitializer<SocketChannel> {
 
     private final WebSocketHandlerFactory handlerFactory;
+    private final ConnectionRegistry connectionRegistry;
 
-    NettyWebSocketServerInitializer(WebSocketHandlerFactory handlerFactory) {
+    NettyWebSocketServerInitializer(WebSocketHandlerFactory handlerFactory, ConnectionRegistry connectionRegistry) {
         this.handlerFactory = handlerFactory;
+        this.connectionRegistry = connectionRegistry;
     }
 
     @Override
@@ -40,5 +43,7 @@ public class NettyWebSocketServerInitializer extends ChannelInitializer<SocketCh
         pipeline.addLast(new HttpObjectAggregator(65536));
         pipeline.addLast(new WebSocketServerCompressionHandler());
         pipeline.addLast(new NettyWebSocketServerHandler(handlerFactory.createHandler()));
+
+        connectionRegistry.pushChannel(ch);
     }
 }

@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.overstreamapp.http;
+package com.overstreamapp.twitchmi;
 
-import java.util.concurrent.Future;
+public interface TwitchMiTrigger {
 
-public interface ResponseFuture extends Future<HttpResponse> {
-
+    void remove();
 }

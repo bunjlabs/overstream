@@ -53,7 +53,6 @@ public class DefaultEventLoopGroupManager implements EventLoopGroupManager {
             this.workerEventLoopGroup = new NioEventLoopGroup(workerThreads, workerThreadFactory);
         }
 
-
         System.setProperty("io.netty.tryReflectionSetAccessible", "false");
 
         log.info("Initialized with {} event loop group, {} boss threads and {} worker threads", type, bossThreads, workerThreads);
